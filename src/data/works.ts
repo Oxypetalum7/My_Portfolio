@@ -180,7 +180,12 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "えさん小学校の教頭先生とのスプリントレビューを重ね、2回の実地試験を実現。\n慣れ親しんだ学校を楽しそうに探索する子供達の姿は今も心に残っており、\n「良いものには技術だけでなく良いデザインが必要」という自身のプロダクト哲学が芽生えた原点です。",
         ],
         images: [{ image: didIt, alt: "DID ITのアプリ画面", width: 200 }],
-        links: [{ label: "プロジェクトWebサイト", url: null }],
+        links: [
+          {
+            label: "プロジェクトWebサイト",
+            url: "https://funswift.github.io/activity-report-website2021/index.html",
+          },
+        ],
       },
       {
         period: "2022",
