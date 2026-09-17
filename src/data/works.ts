@@ -7,6 +7,7 @@ import amabieApp from "../assets/works/amabie-app.png";
 import amabieChara from "../assets/works/amabie-chara.gif";
 import funOnline from "../assets/works/fun-online.png";
 import didIt from "../assets/works/did-it.png";
+import ralaf from "../assets/works/ralaf.png";
 import shougekiLogo from "../assets/works/shougeki-logo.png";
 import shougekiPanel from "../assets/works/shougeki-panel.png";
 
@@ -192,7 +193,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "そこで、当時の大学の友人が、大学側へ\n「QRコード読み取り機能/学籍番号を保持し、アンケートに入力する機能を備えたPWAサービス」\nを提案し、公認の融資プロジェクトとなったのが、RALAFの始まりです。",
           "自身もこちらのプロジェクトに参画させてもらい、Vue.jsによるローカライゼーション対応やメンテナンス、\nサポーターズ社主催の「技育展2021」への出展時プロモーションビデオ、キービジュアル制作を担当しました。",
         ],
-        images: [{ image: funOnline, alt: "RALAFのアプリ画面" }],
+        images: [{ image: ralaf, alt: "RALAFのフライヤー" }],
         links: [{ label: "Youtube - 紹介動画", url: null }],
       },
       {
