@@ -1,0 +1,56 @@
+/* ---------------------------------------------------------------------------
+ * Design tokens — Figma: Portfolio (3zsoie6sjp8SIRNxipwQep)
+ * ------------------------------------------------------------------------- */
+:root {
+  /* global/color */
+  --color-background-default: #292927;
+  --color-white-200: #b3b5b5;
+  --color-black-600: #3d3d3c;
+  --color-text: #ffffff;
+
+  /* typography */
+  --font-display: "Alumni Sans Pinstripe", "Alumni Sans", sans-serif;
+  --font-alumni: "Alumni Sans", sans-serif;
+  --font-accent: "Averia Gruesa Libre", serif;
+  --font-jp:
+    "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium",
+    "Yu Gothic", Meiryo, sans-serif;
+
+  /* elevation */
+  --shadow-header: 0 4px 16px 0 rgba(13, 13, 13, 0.15);
+  --shadow-footer: 0 0 16px 0 rgba(0, 0, 0, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-background-default);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-default);
+  color: var(--color-text);
+  font-family: var(--font-jp);
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+p {
+  margin: 0;
+}

@@ -1,0 +1,26 @@
+---
+import footerBg from "../assets/brand/footer-bg.png";
+---
+
+<footer class="site-footer" style={`background-image: url(${footerBg.src})`}>
+  <p>©︎2026 Yutaro Kikawa</p>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px 16px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: var(--shadow-footer);
+  }
+
+  .site-footer p {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+</style>
