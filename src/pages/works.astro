@@ -1,0 +1,407 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CategoryTip from "../components/CategoryTip.astro";
+import { worksGroups, workCategoryColors } from "../data/works";
+import iconComment from "../assets/works/icon-comment.svg";
+import iconLink from "../assets/works/icon-link.svg";
+import iconPlay from "../assets/works/icon-play.svg";
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+/** \n → <br>、[text](url) → リンク に変換 */
+function renderText(text: string): string {
+  return escapeHtml(text)
+    .replaceAll(
+      /\[([^\]]+)\]\((https?:[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener">$1</a>',
+    )
+    .replaceAll("\n", "<br />");
+}
+---
+
+<BaseLayout title="Works・Projects | Oxypetalum7’s portfolio">
+  <div class="works">
+    <h1 class="page-title">Works・Projects</h1>
+    {
+      worksGroups.map((group) => (
+        <section class="group">
+          <p class="affiliation">{group.affiliation}</p>
+          <div class="work-list">
+            {group.works.map((work) => (
+              <article class="work">
+                <div class="work-main">
+                  <p class="period">{work.period}</p>
+                  <h2 class="work-title">
+                    {work.titleKicker && (
+                      <span class="kicker">{work.titleKicker}</span>
+                    )}
+                    <span set:html={renderText(work.title)} />
+                  </h2>
+                  <p class="credit" set:html={renderText(work.credit.join("\n"))} />
+                  <div class="categories">
+                    {work.categories.map((c) => (
+                      <CategoryTip label={c} color={workCategoryColors[c]} />
+                    ))}
+                  </div>
+                  <p class="summary" set:html={renderText(work.summary)} />
+                  <div class="comment">
+                    <p class="comment-head">
+                      <img src={iconComment.src} alt="" width="24" height="24" />
+                      Comment
+                    </p>
+                    {work.comments.map((c) => (
+                      <p class="comment-body" set:html={renderText(c)} />
+                    ))}
+                  </div>
+                  {work.soundcloudEmbed !== undefined && (
+                    <div class="soundcloud">
+                      {work.soundcloudEmbed ? (
+                        <iframe
+                          title="SoundCloud player"
+                          width="100%"
+                          height="147"
+                          scrolling="no"
+                          frameborder="no"
+                          allow="autoplay"
+                          src={work.soundcloudEmbed}
+                        />
+                      ) : (
+                        <p class="soundcloud-placeholder">
+                          Sound Cloud Embedded Link<br />(準備中)
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div class="work-media">
+                  <div class="media-images">
+                    {work.images.map((img) => (
+                      <span
+                        class:list={["media-frame", { plain: img.plain }]}
+                        style={`width: min(${img.width ?? 468}px, 100%)`}
+                      >
+                        <img src={img.image.src} alt={img.alt} loading="lazy" />
+                        {img.playOverlay && (
+                          <img class="play-overlay" src={iconPlay.src} alt="" />
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <div class="media-links">
+                    <p class="links-head">
+                      <img src={iconLink.src} alt="" width="24" height="24" />
+                      Link
+                    </p>
+                    <hr class="links-divider" />
+                    <div class="links-buttons">
+                      {work.links.map((link) =>
+                        link.url ? (
+                          <a
+                            class="link-button"
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            {link.label}
+                          </a>
+                        ) : (
+                          <span class="link-button" aria-disabled="true">
+                            {link.label}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .works {
+    display: flex;
+    flex-direction: column;
+    padding: 64px 0;
+    color: var(--color-text);
+  }
+
+  .page-title {
+    margin: 0;
+    align-self: center;
+    font-family: var(--font-jp);
+    font-weight: 600;
+    font-size: 48px;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 64px 0;
+  }
+
+  .affiliation {
+    padding: 0 64px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .work-list {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .work {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 0 64px;
+  }
+
+  .work-main {
+    flex: 1 0 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .period {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .work-title {
+    margin: 0;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 48px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .kicker {
+    font-size: 24px;
+  }
+
+  .credit {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .categories {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .summary {
+    padding: 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .comment {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .comment-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .comment-body {
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.8;
+    letter-spacing: 0.6px;
+  }
+
+  .comment-body :global(a) {
+    color: #7d90f1;
+    text-decoration: underline;
+  }
+
+  .soundcloud {
+    width: min(347px, 100%);
+    margin-top: 8px;
+  }
+
+  .soundcloud-placeholder {
+    padding: 24px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    color: #000;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .work-media {
+    flex: 1 0 0;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .media-images {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 24px 0;
+    width: 100%;
+  }
+
+  .media-frame {
+    position: relative;
+    display: inline-block;
+    border-radius: 16px;
+    box-shadow:
+      0 0 32px -8px rgba(255, 255, 255, 0.25),
+      inset 0 0 32px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .media-frame img {
+    display: block;
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .media-frame.plain {
+    border-radius: 0;
+    box-shadow: 0 0 39px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .media-frame.plain img {
+    border-radius: 0;
+  }
+
+  .play-overlay {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 64px !important;
+    height: 64px;
+    border-radius: 0 !important;
+  }
+
+  .media-links {
+    width: min(468px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .links-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .links-divider {
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-top: 1px solid var(--color-white-200);
+    opacity: 0.6;
+  }
+
+  .links-buttons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 8px 24px 0;
+  }
+
+  .link-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid #767675;
+    border-radius: 4px;
+    background: var(--color-black-600);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    white-space: nowrap;
+  }
+
+  .link-button:hover {
+    background: #4a4a48;
+  }
+
+  .link-button[aria-disabled="true"] {
+    opacity: 0.5;
+  }
+
+  @media (max-width: 1000px) {
+    .work {
+      flex-direction: column;
+      padding: 0 16px;
+    }
+
+    .work-media {
+      width: 100%;
+      align-self: auto;
+    }
+
+    .affiliation {
+      padding: 0 16px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .work-title {
+      font-size: 32px;
+    }
+
+    .period,
+    .summary {
+      font-size: 18px;
+    }
+
+    .group {
+      padding: 32px 0;
+    }
+  }
+</style>
