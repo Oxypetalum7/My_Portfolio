@@ -1,17 +1,99 @@
 ---
-
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Splash from "../components/Splash.astro";
+import updates from "../data/updates.json";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title="Oxypetalum7’s portfolio">
+  <Splash />
+  <section class="home">
+    <h1 class="welcome">Welcome!</h1>
+    <div class="home-blocks">
+      <div class="home-block">
+        <h2 class="block-title">- Info -</h2>
+        <p class="brewing-en">Still brewing.</p>
+        <p class="brewing-ja">まだ煮詰め中...</p>
+      </div>
+      <div class="home-block">
+        <h2 class="block-title">- Latest Updating -</h2>
+        <ul class="updates">
+          {
+            updates.map((u) => (
+              <li>
+                <span class="update-date">▶︎ {u.date}</span>
+                <span class="update-text">{` - ${u.text}`}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .home {
+    flex: 1 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 16px;
+  }
+
+  .welcome {
+    margin: 0;
+    font-family: var(--font-alumni);
+    font-weight: 400;
+    font-size: 48px;
+    letter-spacing: 7.68px;
+  }
+
+  .home-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .home-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .block-title {
+    margin: 0;
+    font-family: var(--font-jp);
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .brewing-en {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  .brewing-ja {
+    font-family: var(--font-jp);
+    font-size: 10px;
+  }
+
+  .updates {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .update-date {
+    font-weight: 600;
+  }
+</style>

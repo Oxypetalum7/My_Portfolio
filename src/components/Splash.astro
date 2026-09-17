@@ -1,0 +1,87 @@
+---
+import flowerMark from "../assets/brand/flower-mark.svg";
+---
+
+<div id="splash" class="splash" aria-hidden="true">
+  <img class="splash-icon" src={flowerMark.src} alt="" width="256" height="256" />
+  <p class="splash-title">Oxypetalum7’s portfolio</p>
+</div>
+
+<style>
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-background-default);
+    transition: opacity 0.8s ease;
+  }
+
+  .splash.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .splash-icon {
+    width: 256px;
+    height: 256px;
+    opacity: 0;
+    animation: splash-fade-in 1.2s ease forwards;
+  }
+
+  .splash-title {
+    font-family: var(--font-display);
+    font-size: 64px;
+    letter-spacing: 12.8px;
+    text-align: center;
+    padding: 0 16px;
+    opacity: 0;
+    animation: splash-fade-in 1.2s ease 0.2s forwards;
+  }
+
+  @keyframes splash-fade-in {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .splash-icon {
+      width: 160px;
+      height: 160px;
+    }
+
+    .splash-title {
+      font-size: 36px;
+      letter-spacing: 6px;
+    }
+  }
+</style>
+
+<script>
+  const splash = document.getElementById("splash");
+  if (splash) {
+    if (sessionStorage.getItem("splash-shown")) {
+      splash.remove();
+    } else {
+      sessionStorage.setItem("splash-shown", "1");
+      const dismiss = () => {
+        splash.classList.add("is-hidden");
+        splash.addEventListener("transitionend", () => splash.remove(), {
+          once: true,
+        });
+      };
+      // ロード完了後、少し見せてからディゾルブアウト
+      if (document.readyState === "complete") {
+        setTimeout(dismiss, 1400);
+      } else {
+        window.addEventListener("load", () => setTimeout(dismiss, 1400), {
+          once: true,
+        });
+      }
+    }
+  }
+</script>
