@@ -199,7 +199,9 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "自身もこちらのプロジェクトに参画させてもらい、Vue.jsによるローカライゼーション対応やメンテナンス、\nサポーターズ社主催の「技育展2021」への出展時プロモーションビデオ、キービジュアル制作を担当しました。",
         ],
         images: [{ image: ralaf, alt: "RALAFのフライヤー" }],
-        links: [{ label: "Youtube - 紹介動画", url: null }],
+        links: [
+          { label: "Youtube - 紹介動画", url: "https://www.youtube.com/watch?v=8onCwaI5igw" },
+        ],
       },
       {
         period: "2022, 2025",
