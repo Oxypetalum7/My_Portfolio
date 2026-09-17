@@ -73,6 +73,13 @@ export interface Work {
   links: WorkLink[];
   /** SoundCloud等の埋め込みプレイヤーURL(未定はnull、非対象はundefined) */
   soundcloudEmbed?: string | null;
+  /** SoundCloud埋め込み下のクレジット表記 */
+  soundcloudCredit?: {
+    artistName: string;
+    artistUrl: string;
+    trackTitle: string;
+    trackUrl: string;
+  };
 }
 
 export const worksGroups: { affiliation: string; works: Work[] }[] = [
@@ -123,7 +130,15 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
         ],
         images: [{ image: repairIt, alt: "Repair It! のタイトル画面" }],
         links: [{ label: "Github", url: "https://github.com/Oxypetalum7/Repair-it-" }],
-        soundcloudEmbed: null,
+        soundcloudEmbed:
+          "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A754415686&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+        soundcloudCredit: {
+          artistName: "きーちゃん",
+          artistUrl: "https://soundcloud.com/e_oxypetalum_7",
+          trackTitle: "Global Game Jam 2020 提出作品「Repair it!」メインテーマ",
+          trackUrl:
+            "https://soundcloud.com/e_oxypetalum_7/global-game-jam-2020-repair-it",
+        },
       },
       {
         period: "2020",
