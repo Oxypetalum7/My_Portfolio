@@ -225,8 +225,14 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           { image: shougekiPanel, alt: "笑撃の紹介パネル", width: 240, plain: true },
         ],
         links: [
-          { label: "Open Hack U 2021 - Youtube", url: null },
-          { label: "X - post", url: null },
+          {
+            label: "Open Hack U 2021 - Youtube",
+            url: "https://youtu.be/mxQEbQwfGRI?t=4947",
+          },
+          {
+            label: "X - post",
+            url: "https://x.com/kotambourine/status/1919198376232444057?s=20",
+          },
         ],
       },
     ],
