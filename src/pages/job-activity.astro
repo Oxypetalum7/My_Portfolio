@@ -1,0 +1,162 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CategoryTip from "../components/CategoryTip.astro";
+import { jobActivityGroups, categoryColors } from "../data/jobActivities";
+---
+
+<BaseLayout title="Job Activities | Oxypetalum7’s portfolio">
+  <div class="job-activities">
+    <h1 class="page-title">Job Activities</h1>
+    {
+      jobActivityGroups.map((group) => (
+        <section class="company-group">
+          <p class="company">{group.company}</p>
+          <div class="activities">
+            {group.activities.map((activity) => (
+              <article class="activity">
+                <p class="period">{activity.period}</p>
+                <h2 class="activity-title">{activity.title}</h2>
+                {activity.categories.length > 0 && (
+                  <div class="categories">
+                    {activity.categories.map((c) => (
+                      <CategoryTip label={c} color={categoryColors[c]} />
+                    ))}
+                  </div>
+                )}
+                <div class="body">
+                  {activity.paragraphs.map((paragraph) => (
+                    <p>
+                      {paragraph.split("\n").map((line, i) => (
+                        <>
+                          {i > 0 && <br />}
+                          {line}
+                        </>
+                      ))}
+                    </p>
+                  ))}
+                </div>
+                {activity.roles.length > 0 && (
+                  <div class="roles">
+                    <p>担当</p>
+                    <ul>
+                      {activity.roles.map((role) => (
+                        <li>{role}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .job-activities {
+    display: flex;
+    flex-direction: column;
+    padding: 64px 0;
+    color: var(--color-text);
+  }
+
+  .page-title {
+    margin: 0;
+    align-self: center;
+    font-family: var(--font-jp);
+    font-weight: 600;
+    font-size: 48px;
+  }
+
+  .company-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 64px 0;
+  }
+
+  .company {
+    padding: 0 64px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .activities {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .activity {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 0 64px;
+    max-width: 1350px;
+  }
+
+  .period {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .activity-title {
+    margin: 0;
+    font-size: 48px;
+    font-weight: 600;
+  }
+
+  .categories {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  .roles {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .roles ul {
+    margin: 0;
+    padding-left: 36px;
+  }
+
+  @media (max-width: 700px) {
+    .page-title {
+      font-size: 32px;
+    }
+
+    .company,
+    .activity {
+      padding: 0 16px;
+    }
+
+    .company-group {
+      padding: 32px 0;
+    }
+
+    .activity-title {
+      font-size: 28px;
+    }
+
+    .period,
+    .body,
+    .roles {
+      font-size: 18px;
+    }
+  }
+</style>

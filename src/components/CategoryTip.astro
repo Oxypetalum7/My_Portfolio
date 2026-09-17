@@ -1,0 +1,24 @@
+---
+interface Props {
+  label: string;
+  color: string;
+}
+
+const { label, color } = Astro.props;
+---
+
+<span class="category-tip" style={`background: ${color}`}>{label}</span>
+
+<style>
+  .category-tip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+  }
+</style>
