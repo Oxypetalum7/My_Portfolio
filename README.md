@@ -1,43 +1,61 @@
-# Astro Starter Kit: Minimal
+# Oxypetalum7's Portfolio
+
+木川 裕太郎 / Yutaro Kikawa (a.k.a. ki-chan / oxypetalum7) のWebポートフォリオです。
+
+🌐 公開先: [gekka-o.xyz](https://gekka-o.xyz) (準備中)
+
+## コンセプト — リブランディングに寄せて
+
+このポートフォリオは、自身の「好き」を基調に据えたリブランディングとして制作しています。
+
+### 意匠
+
+- **狼** — 昔から好きな動物。気高さと冷静さ、慎重でありながら親しいものへの愛がある習性は、目指すエンジニア像であり、自身が魅力的だと思う価値観そのものです。
+- **月下美人** — 7月19日の誕生花。花言葉「強い意志」「秘めた情熱」には信条としたい響きがあり、夜にだけ静かに咲くその神秘性にも惹かれています。ハンドルネームの *oxypetalum* も、月下美人の学名 (*Epiphyllum oxypetalum*) から取っています。
+
+### デザインシステム方針
+
+**シンプルで、優しいデザイン。**
+強いビジュアルで語るのではなく、可視性を担保しながら、諸所の技と遊び心で自身のエネルギーを語ることを目指しました。カンプはFigmaでコンポーネントから自らの手で丁寧に作り、アクセシビリティを配慮したカラーシステムと、一貫したコンポーネントレイアウトを構築しています。
+
+**AIとの協調。**
+AIと協調して作ることを前提に、Figmaでのカンプ作成を徹底しました。ポートフォリオ案の壁打ちから、素材数点(アイコンのBezier/pwm-moonバリアント、Infoの空白時テキスト)のアイデア出しまで、Claudeと意見を交わしながら制作しています。実装もカンプを共通言語として、Claude Codeとの対話を重ねて磨き上げました。
+
+> 📝 リブランディングのコメンタリーブログ、およびClaude側のこだわりレポートを[ブログ](https://oxypetalum7.github.io/myblog/)にて公開予定です。
+
+## こだわりの実装
+
+- **月下美人の開花アニメーション** — トップページのアイコンは3種のバリアントからアクセスごとにランダム表示。花弁4層(細線8枚→大→中→小)→雄蕊→雌蕊の順に、わずかに回転しながら時差で「開花」します
+- **しっとりとした演出の統一** — ページ遷移(View Transitions)、Biographyのぼかし画像バンド、ポラロイド写真の投げ入れなど、ブラーとease系カーブによる柔らかな質感で統一
+- **解像度にシームレスに追従するレイアウト** — `max()` / `clamp()` を用いた連続的な位置・スケール計算で、モバイルからウルトラワイドまでブレークポイントの「跳び」なく追従
+- **データ駆動** — 作品 (`works.ts`)、職務経歴 (`jobActivities.ts`)、更新情報 (`updates.json`)、ステータス文言 (`statusMessages.ts`) をデータとして分離し、内容の更新をコード変更から独立
+
+## 技術構成
+
+| 項目 | 採用技術 |
+| :--- | :--- |
+| フレームワーク | [Astro](https://astro.build) (静的ビルド + View Transitions) |
+| フォント | セルフホスト ([Fontsource](https://fontsource.org): Alumni Sans / Alumni Sans Pinstripe / Averia Gruesa Libre) + Hiragino系 |
+| デザインカンプ | Figma (コンポーネントベースで自作) |
+| ホスティング | Cloudflare (予定) |
+
+## ページ構成
+
+- **Home** — 月下美人アイコンの開花と、ランダムなステータス文言でお出迎え
+- **Biography** — Professional / Personal をスライドトグルで切替(ダーク/ライトのテーマも連動)
+- **Job Activities** — 職務経歴
+- **Works・Projects** — 学生時代からの制作物(動画・SoundCloud埋め込みつき)
+- **Links・Contacts** — 各種リンクと連絡先
+
+## 開発
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run dev      # 開発サーバー (localhost:4321)
+npm run build    # 本番ビルド (./dist/)
+npm run preview  # ビルドのプレビュー
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## License
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+©︎2026 Yutaro Kikawa — ソースコードの参照は歓迎ですが、文章・画像・動画等のコンテンツの無断転載はご遠慮ください。
