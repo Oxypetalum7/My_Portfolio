@@ -278,5 +278,11 @@
     .indent-lg {
       padding-left: 24px;
     }
+
+    /* デスクトップの行長に合わせた手動改行はスマホでは二重折り返しになるため、
+       自然な折り返しに任せる(skill-listの改行はレイアウト用なので残す) */
+    .approach-body br {
+      display: none;
+    }
   }
 </style>
