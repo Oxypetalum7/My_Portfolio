@@ -2,7 +2,7 @@
 
 木川 裕太郎 / Yutaro Kikawa (a.k.a. ki-chan / oxypetalum7) のWebポートフォリオです。
 
-🌐 公開先: [gekka-o.xyz](https://gekka-o.xyz) (準備中)
+🌐 公開先: [gekka-o.xyz](https://gekka-o.xyz)
 
 ## コンセプト — リブランディングに寄せて
 
@@ -37,7 +37,7 @@ AIと協調して作ることを前提に、Figmaでのカンプ作成を徹底�
 | フレームワーク | [Astro](https://astro.build) (静的ビルド + View Transitions) |
 | フォント | セルフホスト ([Fontsource](https://fontsource.org): Alumni Sans / Alumni Sans Pinstripe / Averia Gruesa Libre) + Hiragino系 |
 | デザインカンプ | Figma (コンポーネントベースで自作) |
-| ホスティング | Cloudflare (予定) |
+| ホスティング | Cloudflare Workers (静的アセット配信、GitHub連携で自動デプロイ) |
 
 ## ページ構成
 
