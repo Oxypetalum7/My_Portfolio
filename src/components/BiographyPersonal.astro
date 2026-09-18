@@ -6,12 +6,11 @@ import heroBand from "../assets/biography/hero-band.jpg";
 ---
 
 <section class="bio-personal">
-  <div class="hero-band" aria-hidden="true">
-    <img src={heroBand.src} alt="" />
-    <div class="hero-band-fade"></div>
-  </div>
-
   <div class="section">
+    <div class="hero-band" aria-hidden="true">
+      <img src={heroBand.src} alt="" />
+      <div class="hero-band-fade"></div>
+    </div>
     <h2 class="h-section">Profile</h2>
     <p class="name">木川 裕太郎 / <span class="name-en">Yutaro Kikawa</span></p>
     <p class="aka">a.k.a. ki-chan / oxypetalum7</p>
@@ -166,34 +165,55 @@ import heroBand from "../assets/biography/hero-band.jpg";
     isolation: isolate;
   }
 
-  /* Profile背後のぼかし画像バンド */
+  /* Profile背後のぼかし画像バンド。Profileセクション(上下パディング込み)にフィットさせる */
   .hero-band {
     position: absolute;
-    top: 100px;
+    top: 4px;
+    bottom: -4px;
     left: -64px;
     right: -64px;
-    height: 316px;
     overflow: hidden;
     filter: blur(4px);
     z-index: -1;
+    /* トグル切り替え直後は背景がまだ暗いため、少し待ってからフェードインさせる */
+    opacity: 0;
+    animation: hero-fade-in 0.9s cubic-bezier(0.45, 0.05, 0.35, 1) 0.1s forwards;
   }
 
+  @keyframes hero-fade-in {
+    from {
+      opacity: 0;
+      filter: blur(12px);
+      transform: scale(1.02);
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(4px);
+      transform: scale(1);
+    }
+  }
+
+  /* 幅広画面では画像の左端がフェードより手前で途切れるため、37%の白ストップ下に収まるよう幅を追従させる。
+     拡大に伴い時計(画像内 縦43%)が帯の下へ流れるので、top も幅に連動させて時計の高さを固定する */
   .hero-band img {
+    --hero-w: max(1046px, calc(63vw + 150px));
     position: absolute;
     right: -150px;
-    top: -168px;
-    width: 1046px;
+    top: calc(234px - var(--hero-w) * 0.285);
+    width: var(--hero-w);
     max-width: none;
     object-fit: cover;
   }
 
+  /* 白の各ストップにpx下限を設け、幅が狭くなってもテキスト上の白さを維持する */
   .hero-band-fade {
     position: absolute;
     inset: 0;
     background: linear-gradient(
       to right,
-      #ffffff 37%,
-      rgba(255, 255, 255, 0.9) 55%,
+      #ffffff max(37%, 520px),
+      rgba(255, 255, 255, 0.9) max(55%, 760px),
       rgba(255, 255, 255, 0) 100%
     );
   }
@@ -368,7 +388,8 @@ import heroBand from "../assets/biography/hero-band.jpg";
   }
 
   @media (prefers-reduced-motion: reduce) {
-    [data-throw-in] {
+    [data-throw-in],
+    .hero-band {
       opacity: 1;
       animation: none !important;
     }
@@ -391,12 +412,13 @@ import heroBand from "../assets/biography/hero-band.jpg";
       height: auto;
     }
 
-    .hero-band {
-      display: none;
-    }
   }
 
   @media (max-width: 700px) {
+    .hero-band {
+      display: none;
+    }
+
     .h-section,
     .name {
       font-size: 26px;
