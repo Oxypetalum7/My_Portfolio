@@ -2,11 +2,24 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Splash from "../components/Splash.astro";
 import updates from "../data/updates.json";
+import iconDefaultRaw from "../assets/brand/gekkabijin-default.svg?raw";
+import iconBezierRaw from "../assets/brand/gekkabijin-bezier.svg?raw";
+import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
 ---
 
 <BaseLayout title="Oxypetalum7’s portfolio">
   <Splash />
   <section class="home">
+    {/* style属性はCSS読込前のFOUCによるレイアウト崩れ防止(スタイルシート側と同値) */}
+    <div
+      class="welcome-icon"
+      aria-hidden="true"
+      style="position: relative; width: clamp(140px, 18vw, 200px); aspect-ratio: 1;"
+    >
+      <div class="icon-bloom-layers" data-variant style="position: absolute; inset: 0; opacity: 0;" set:html={iconDefaultRaw} />
+      <div class="icon-bloom-layers" data-variant style="position: absolute; inset: 0; opacity: 0;" set:html={iconBezierRaw} />
+      <div class="icon-bloom-layers" data-variant style="position: absolute; inset: 0; opacity: 0;" set:html={iconMoonRaw} />
+    </div>
     <h1 class="welcome">Welcome!</h1>
     <div class="home-blocks">
       <div class="home-block">
@@ -49,6 +62,27 @@ import updates from "../data/updates.json";
     font-size: 48px;
     letter-spacing: 7.68px;
   }
+
+  /* 月下美人アイコン。アクセスごとにJSが3種から1つ選んで咲かせる */
+  .welcome-icon {
+    position: relative;
+    width: clamp(140px, 18vw, 200px);
+    aspect-ratio: 1;
+  }
+
+  .welcome-icon [data-variant] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+
+  /* 各層が順にインするため、コンテナは即時表示 */
+  .welcome-icon .icon-bloom-layers.is-active {
+    opacity: 1;
+  }
+
 
   .home-blocks {
     display: flex;
@@ -97,3 +131,108 @@ import updates from "../data/updates.json";
     font-weight: 600;
   }
 </style>
+
+<style is:global>
+  /* set:htmlで挿入したSVG内部はスコープ付きスタイルが届かないため、ここでグローバルに定義する。
+     開花順: 細線8枚 → 大4枚 → 中4枚 → 小4枚 → 雄蕊 → 雌蕊。花弁のみ僅かに回転しながらイン */
+  .icon-bloom-layers svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .icon-bloom-layers .layer {
+    opacity: 0;
+  }
+
+  .icon-bloom-layers.is-active .layer {
+    animation: icon-layer-in 1s cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+  }
+
+  .icon-bloom-layers.is-active .petals {
+    animation-name: icon-petal-in;
+    animation-duration: 1.3s;
+    transform-origin: 128px 128px;
+    transform-box: view-box;
+  }
+
+  .icon-bloom-layers.is-active .petals-a,
+  .icon-bloom-layers.is-active .petals-a2 {
+    --spin: -16deg;
+    animation-delay: 0.1s;
+  }
+
+  .icon-bloom-layers.is-active .petals-b {
+    --spin: 12deg;
+    animation-delay: 0.4s;
+  }
+
+  .icon-bloom-layers.is-active .petals-c {
+    --spin: -12deg;
+    animation-delay: 0.7s;
+  }
+
+  .icon-bloom-layers.is-active .petals-d {
+    --spin: 10deg;
+    animation-delay: 1s;
+  }
+
+  .icon-bloom-layers.is-active .stamen {
+    animation-delay: 1.35s;
+  }
+
+  .icon-bloom-layers.is-active .pistil {
+    animation-delay: 1.6s;
+  }
+
+  @keyframes icon-layer-in {
+    from {
+      opacity: 0;
+      filter: blur(6px);
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes icon-petal-in {
+    from {
+      opacity: 0;
+      filter: blur(8px);
+      transform: rotate(var(--spin, -12deg));
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: rotate(0deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .icon-bloom-layers.is-active .layer {
+      opacity: 1;
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // トップへのアクセス(SPA遷移含む)ごとに、3種のアイコンからランダムで1つ表示する
+  function initWelcomeIcon() {
+    const icons = document.querySelectorAll<HTMLElement>(".welcome-icon [data-variant]");
+    if (icons.length === 0) return;
+    for (const icon of icons) {
+      icon.classList.remove("is-active");
+      icon.style.opacity = "0";
+    }
+    const pick = icons[Math.floor(Math.random() * icons.length)];
+    // FOUC対策のインラインopacityを外してからアクティブ化する(インラインはクラスより優先されるため)
+    pick.style.opacity = "";
+    pick.classList.add("is-active");
+  }
+
+  document.addEventListener("astro:page-load", initWelcomeIcon);
+</script>
