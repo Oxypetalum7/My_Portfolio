@@ -24,8 +24,8 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
     <div class="home-blocks">
       <div class="home-block">
         <h2 class="block-title">- Info -</h2>
-        <p class="brewing-en">Still brewing.</p>
-        <p class="brewing-ja">まだ煮詰め中...</p>
+        <p class="brewing-en" data-status-en>Still brewing.</p>
+        <p class="brewing-ja" data-status-ja>まだ煮詰め中。</p>
       </div>
       <div class="home-block">
         <h2 class="block-title">- Latest Updating -</h2>
@@ -130,6 +130,21 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
   .update-date {
     font-weight: 600;
   }
+
+  @media (max-width: 700px) {
+    .home {
+      padding: 32px 36px;
+    }
+
+    .welcome {
+      font-size: 36px;
+      letter-spacing: 5px;
+    }
+
+    .block-title {
+      font-size: 20px;
+    }
+  }
 </style>
 
 <style is:global>
@@ -220,6 +235,20 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
 </style>
 
 <script>
+  import { statusMessages } from "../data/statusMessages";
+
+  // Infoブロックのステータス文言を、アクセスごとにランダムで1つ表示する
+  function initStatusMessage() {
+    const en = document.querySelector(".home [data-status-en]");
+    const ja = document.querySelector(".home [data-status-ja]");
+    if (!en || !ja) return;
+    const pick = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+    en.textContent = pick.en;
+    ja.textContent = pick.ja;
+  }
+
+  document.addEventListener("astro:page-load", initStatusMessage);
+
   // トップへのアクセス(SPA遷移含む)ごとに、3種のアイコンからランダムで1つ表示する
   function initWelcomeIcon() {
     const icons = document.querySelectorAll<HTMLElement>(".welcome-icon [data-variant]");
