@@ -26,6 +26,7 @@ const currentPath = Astro.url.pathname;
           {i > 0 && <span class="nav-divider" aria-hidden="true" />}
           <a
             href={item.href}
+            data-label={item.label}
             aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
           >
             {item.label}
@@ -89,12 +90,25 @@ const currentPath = Astro.url.pathname;
   }
 
   .nav-links a {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
     font-family: var(--font-jp);
     font-weight: 300;
     font-size: clamp(13px, 1.4vw, 20px);
     letter-spacing: clamp(0.6px, 0.17vw, 2.4px);
     padding: 8px clamp(4px, 0.85vw, 12px);
     white-space: nowrap;
+  }
+
+  /* 選択時の太字化で幅が揺れないよう、不可視の太字ダミーで幅を先に確保する */
+  .nav-links a::after {
+    content: attr(data-label);
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    font-weight: 600;
+    pointer-events: none;
   }
 
   .nav-links a[aria-current="page"] {

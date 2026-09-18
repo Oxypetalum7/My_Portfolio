@@ -62,26 +62,30 @@ import flowerMark from "../assets/brand/flower-mark.svg";
 </style>
 
 <script>
-  const splash = document.getElementById("splash");
-  if (splash) {
+  // ClientRouterによるSPA遷移でトップへ戻った時も処理されるよう、astro:page-loadごとに実行する
+  function initSplash() {
+    const splash = document.getElementById("splash");
+    if (!splash) return;
     if (sessionStorage.getItem("splash-shown")) {
       splash.remove();
+      return;
+    }
+    sessionStorage.setItem("splash-shown", "1");
+    const dismiss = () => {
+      splash.classList.add("is-hidden");
+      splash.addEventListener("transitionend", () => splash.remove(), {
+        once: true,
+      });
+    };
+    // ロード完了後、少し見せてからディゾルブアウト
+    if (document.readyState === "complete") {
+      setTimeout(dismiss, 1400);
     } else {
-      sessionStorage.setItem("splash-shown", "1");
-      const dismiss = () => {
-        splash.classList.add("is-hidden");
-        splash.addEventListener("transitionend", () => splash.remove(), {
-          once: true,
-        });
-      };
-      // ロード完了後、少し見せてからディゾルブアウト
-      if (document.readyState === "complete") {
-        setTimeout(dismiss, 1400);
-      } else {
-        window.addEventListener("load", () => setTimeout(dismiss, 1400), {
-          once: true,
-        });
-      }
+      window.addEventListener("load", () => setTimeout(dismiss, 1400), {
+        once: true,
+      });
     }
   }
+
+  document.addEventListener("astro:page-load", initSplash);
 </script>

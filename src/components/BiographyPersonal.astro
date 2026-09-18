@@ -11,14 +11,14 @@ import heroBand from "../assets/biography/hero-band.jpg";
       <img src={heroBand.src} alt="" />
       <div class="hero-band-fade"></div>
     </div>
-    <h2 class="h-section">Profile</h2>
+    <h2 class="h-section">Profile <span class="ruby">プロフィール</span></h2>
     <p class="name">木川 裕太郎 / <span class="name-en">Yutaro Kikawa</span></p>
     <p class="aka">a.k.a. ki-chan / oxypetalum7</p>
     <p class="lead tracked">Born 2000・Sapporo, Japan</p>
     <p class="lead">Identity → なんでも作りたくなる、やってみたくなる、ドリーマー</p>
     <p class="lead">Career</p>
     <ul class="detail-list">
-      <li>公立はこだて未来大学 | 2019/04 - 2022/03 | 情報アーキテクチャ学科 情報システムコース 卒業</li>
+      <li>公立はこだて未来大学 | 2019/04 - 2023/03 | 情報アーキテクチャ学科 情報システムコース 卒業</li>
     </ul>
   </div>
 
@@ -442,35 +442,40 @@ import heroBand from "../assets/biography/hero-band.jpg";
 </style>
 
 <script>
-  const collage = document.querySelector(".photo-collage");
-  if (collage) {
-    // .photo-collage は高さ0のコンテナのため threshold は使えない。
-    // rootMargin で「コンテナ上端がビューポート下から35%の線を越えたら」発火させる
-    let observer: IntersectionObserver | null = null;
-    const arm = () => {
-      observer?.disconnect();
-      observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("throw-in-visible");
-              observer?.disconnect();
-            }
-          }
-        },
-        { rootMargin: "0px 0px -35% 0px" },
-      );
-      observer.observe(collage);
-    };
-    arm();
+  // .photo-collage は高さ0のコンテナのため threshold は使えない。
+  // rootMargin で「コンテナ上端がビューポート下から35%の線を越えたら」発火させる
+  let observer: IntersectionObserver | null = null;
 
-    // Professional側へ切り替わったらリセットし、次にPersonalへ戻った時も
-    // スクロール位置に応じて再発火させる
-    document.addEventListener("biography:sidechange", (event) => {
-      if ((event as CustomEvent).detail?.side !== "personal") {
-        collage.classList.remove("throw-in-visible");
-        arm();
-      }
-    });
+  function arm(collage: Element) {
+    observer?.disconnect();
+    observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("throw-in-visible");
+            observer?.disconnect();
+          }
+        }
+      },
+      { rootMargin: "0px 0px -35% 0px" },
+    );
+    observer.observe(collage);
   }
+
+  // ClientRouterによるSPA遷移後もDOMを取り直せるよう、astro:page-loadごとに初期化する
+  document.addEventListener("astro:page-load", () => {
+    const collage = document.querySelector(".photo-collage");
+    if (collage) arm(collage);
+  });
+
+  // Professional側へ切り替わったらリセットし、次にPersonalへ戻った時も
+  // スクロール位置に応じて再発火させる
+  document.addEventListener("biography:sidechange", (event) => {
+    const collage = document.querySelector(".photo-collage");
+    if (!collage) return;
+    if ((event as CustomEvent).detail?.side !== "personal") {
+      collage.classList.remove("throw-in-visible");
+      arm(collage);
+    }
+  });
 </script>

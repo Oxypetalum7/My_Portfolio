@@ -125,36 +125,42 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
 </style>
 
 <script>
-  const root = document.querySelector<HTMLElement>(".biography");
-  const toggle = document.getElementById("biography-toggle");
-  const panels = {
-    professional: document.getElementById("side-professional"),
-    personal: document.getElementById("side-personal"),
-  };
-
   type Side = "professional" | "personal";
 
-  function setSide(side: Side) {
-    if (!root) return;
-    root.dataset.side = side;
-    toggle?.setAttribute("aria-checked", String(side === "personal"));
-    for (const key of ["professional", "personal"] as const) {
-      if (panels[key]) panels[key].hidden = key !== side;
+  // ClientRouterによるSPA遷移後もDOMを取り直せるよう、astro:page-loadごとに初期化する
+  function initBiographyToggle() {
+    const root = document.querySelector<HTMLElement>(".biography");
+    const toggle = document.getElementById("biography-toggle");
+    if (!root || !toggle) return;
+    const panels = {
+      professional: document.getElementById("side-professional"),
+      personal: document.getElementById("side-personal"),
+    };
+
+    function setSide(side: Side) {
+      if (!root) return;
+      root.dataset.side = side;
+      toggle?.setAttribute("aria-checked", String(side === "personal"));
+      for (const key of ["professional", "personal"] as const) {
+        if (panels[key]) panels[key].hidden = key !== side;
+      }
+      const url = new URL(location.href);
+      url.searchParams.set("side", side);
+      history.replaceState(null, "", url);
+      document.dispatchEvent(
+        new CustomEvent("biography:sidechange", { detail: { side } }),
+      );
     }
-    const url = new URL(location.href);
-    url.searchParams.set("side", side);
-    history.replaceState(null, "", url);
-    document.dispatchEvent(
-      new CustomEvent("biography:sidechange", { detail: { side } }),
-    );
+
+    toggle.addEventListener("click", () => {
+      setSide(root.dataset.side === "personal" ? "professional" : "personal");
+    });
+
+    // URLパラメータで初期表示を切替可能にする
+    if (new URLSearchParams(location.search).get("side") === "personal") {
+      setSide("personal");
+    }
   }
 
-  toggle?.addEventListener("click", () => {
-    setSide(root?.dataset.side === "personal" ? "professional" : "personal");
-  });
-
-  // URLパラメータで初期表示を切替可能にする
-  if (new URLSearchParams(location.search).get("side") === "personal") {
-    setSide("personal");
-  }
+  document.addEventListener("astro:page-load", initBiographyToggle);
 </script>
