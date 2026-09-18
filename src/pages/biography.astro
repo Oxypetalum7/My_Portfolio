@@ -7,29 +7,22 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
 <BaseLayout title="Biography | Oxypetalum7’s portfolio">
   <div class="biography" data-side="professional">
     <div class="toggle-row">
-      <div class="toggle" role="tablist" aria-label="Biographyの表示切替">
-        <button
-          class="toggle-button"
-          id="toggle-professional"
-          role="tab"
-          aria-selected="true"
-        >
-          Professional
-        </button>
-        <button
-          class="toggle-button"
-          id="toggle-personal"
-          role="tab"
-          aria-selected="false"
-        >
-          Personal
-        </button>
-      </div>
+      <button
+        class="toggle"
+        id="biography-toggle"
+        role="switch"
+        aria-checked="false"
+        aria-label="BiographyをPersonal表示に切り替え"
+      >
+        <span class="toggle-thumb" aria-hidden="true"></span>
+        <span class="toggle-option">Professional</span>
+        <span class="toggle-option">Personal</span>
+      </button>
     </div>
-    <div id="side-professional" role="tabpanel" aria-labelledby="toggle-professional">
+    <div id="side-professional">
       <BiographyProfessional />
     </div>
-    <div id="side-personal" role="tabpanel" aria-labelledby="toggle-personal" hidden>
+    <div id="side-personal" hidden>
       <BiographyPersonal />
     </div>
   </div>
@@ -57,40 +50,48 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
   }
 
   .toggle {
+    position: relative;
     display: flex;
     gap: 16px;
     padding: 8px;
+    border: none;
     border-radius: 16px;
     width: min(820px, 100%);
     background: var(--color-black-600);
     box-shadow: inset 0 0 16px 0 rgba(0, 0, 0, 0.25);
+    cursor: pointer;
     transition: background-color 0.4s ease;
   }
 
-  .toggle-button {
-    flex: 1 0 0;
-    min-width: 0;
-    padding: 16px 36px;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--color-text);
-    font-family: var(--font-jp);
-    font-weight: 600;
-    font-size: 24px;
-    cursor: pointer;
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease,
-      box-shadow 0.3s ease;
-  }
-
-  .toggle-button[aria-selected="true"] {
+  /* 選択中ボタンの背景板。ボタン間をスライドする */
+  .toggle-thumb {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: calc(50% - 16px);
     border-radius: 12px;
     background: var(--color-background-default);
     box-shadow:
       0 4px 8px 0 rgba(0, 0, 0, 0.25),
       inset 0 0 24px -8px black;
+    transition:
+      transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.4s ease,
+      box-shadow 0.4s ease;
+  }
+
+  .toggle-option {
+    position: relative;
+    flex: 1 0 0;
+    min-width: 0;
+    padding: 16px 36px;
+    border-radius: 12px;
+    color: var(--color-text);
+    font-family: var(--font-jp);
+    font-weight: 600;
+    font-size: 24px;
+    transition: color 0.3s ease;
   }
 
   /* Personal側: ライトテーマのトグル */
@@ -99,11 +100,12 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
     box-shadow: inset 0 0 16px -4px rgba(0, 0, 0, 0.25);
   }
 
-  .biography[data-side="personal"] .toggle-button {
+  .biography[data-side="personal"] .toggle-option {
     color: var(--color-black-600);
   }
 
-  .biography[data-side="personal"] .toggle-button[aria-selected="true"] {
+  .biography[data-side="personal"] .toggle-thumb {
+    transform: translateX(calc(100% + 16px));
     background: #ffffff;
     box-shadow:
       0 4px 8px -4px rgba(0, 0, 0, 0.25),
@@ -115,7 +117,7 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
       padding: 32px 16px;
     }
 
-    .toggle-button {
+    .toggle-option {
       padding: 12px 8px;
       font-size: 18px;
     }
@@ -124,10 +126,7 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
 
 <script>
   const root = document.querySelector<HTMLElement>(".biography");
-  const buttons = {
-    professional: document.getElementById("toggle-professional"),
-    personal: document.getElementById("toggle-personal"),
-  };
+  const toggle = document.getElementById("biography-toggle");
   const panels = {
     professional: document.getElementById("side-professional"),
     personal: document.getElementById("side-personal"),
@@ -138,8 +137,8 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
   function setSide(side: Side) {
     if (!root) return;
     root.dataset.side = side;
+    toggle?.setAttribute("aria-checked", String(side === "personal"));
     for (const key of ["professional", "personal"] as const) {
-      buttons[key]?.setAttribute("aria-selected", String(key === side));
       if (panels[key]) panels[key].hidden = key !== side;
     }
     const url = new URL(location.href);
@@ -147,8 +146,9 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
     history.replaceState(null, "", url);
   }
 
-  buttons.professional?.addEventListener("click", () => setSide("professional"));
-  buttons.personal?.addEventListener("click", () => setSide("personal"));
+  toggle?.addEventListener("click", () => {
+    setSide(root?.dataset.side === "personal" ? "professional" : "personal");
+  });
 
   // URLパラメータで初期表示を切替可能にする
   if (new URLSearchParams(location.search).get("side") === "personal") {
