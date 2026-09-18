@@ -236,6 +236,77 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
 
 <script>
   import { statusMessages } from "../data/statusMessages";
+  import staticUpdates from "../data/updates.json";
+
+  interface UpdateEntry {
+    date: string;
+    text: string;
+  }
+
+  // GitHubリリースノートを更新情報として取り込む。
+  // 公開APIをクライアントから直接叩くため、リリース公開だけで(再ビルドなしで)サイトに反映される。
+  // 失敗時は静的な updates.json のみの表示のまま。セッション中はキャッシュしてAPIを叩きすぎない。
+  const RELEASES_API =
+    "https://api.github.com/repos/Oxypetalum7/My_Portfolio/releases?per_page=10";
+  const MAX_UPDATES = 5;
+
+  async function fetchReleaseUpdates(): Promise<UpdateEntry[]> {
+    try {
+      const cached = sessionStorage.getItem("release-updates");
+      if (cached) return JSON.parse(cached);
+    } catch {
+      /* sessionStorage不可の環境では毎回取得に進む */
+    }
+    const res = await fetch(RELEASES_API);
+    if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
+    const releases = await res.json();
+    const updates: UpdateEntry[] = releases
+      .filter((r: { draft: boolean; prerelease: boolean }) => !r.draft && !r.prerelease)
+      .map((r: { published_at: string; name: string | null; tag_name: string }) => ({
+        date: new Date(r.published_at).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }),
+        text: r.name || r.tag_name,
+      }));
+    try {
+      sessionStorage.setItem("release-updates", JSON.stringify(updates));
+    } catch {
+      /* noop */
+    }
+    return updates;
+  }
+
+  async function initUpdates() {
+    const list = document.querySelector(".home .updates");
+    if (!list) return;
+    try {
+      const releaseUpdates = await fetchReleaseUpdates();
+      if (releaseUpdates.length === 0) return;
+      // 静的エントリと結合し、日付降順で最新数件を表示(yyyy/mm/dd形式は文字列比較で整列可)
+      const merged = [...releaseUpdates, ...(staticUpdates as UpdateEntry[])]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, MAX_UPDATES);
+      list.replaceChildren(
+        ...merged.map((u) => {
+          const li = document.createElement("li");
+          const date = document.createElement("span");
+          date.className = "update-date";
+          date.textContent = `▶︎ ${u.date}`;
+          const text = document.createElement("span");
+          text.className = "update-text";
+          text.textContent = ` - ${u.text}`;
+          li.append(date, text);
+          return li;
+        }),
+      );
+    } catch {
+      /* 取得失敗時は静的表示のまま */
+    }
+  }
+
+  document.addEventListener("astro:page-load", initUpdates);
 
   // Infoブロックのステータス文言を、アクセスごとにランダムで1つ表示する
   function initStatusMessage() {
