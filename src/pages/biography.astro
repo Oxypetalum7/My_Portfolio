@@ -144,6 +144,9 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
     const url = new URL(location.href);
     url.searchParams.set("side", side);
     history.replaceState(null, "", url);
+    document.dispatchEvent(
+      new CustomEvent("biography:sidechange", { detail: { side } }),
+    );
   }
 
   toggle?.addEventListener("click", () => {
