@@ -2,6 +2,7 @@ import type { ImageMetadata } from "astro";
 
 import bromidi from "../assets/works/bromidi.png";
 import discordBot from "../assets/works/discord-processing-bot.jpg";
+import discordBotVideo from "../assets/works/discord-processing-bot.mp4";
 import repairIt from "../assets/works/repair-it.png";
 import amabieApp from "../assets/works/amabie-app.png";
 import amabieChara from "../assets/works/amabie-chara.gif";
@@ -47,6 +48,8 @@ export interface WorkImage {
   width?: number;
   /** 再生アイコンのオーバーレイを重ねるか */
   playOverlay?: boolean;
+  /** クリックで再生する動画のURL。imageはそのポスターとして使われる */
+  video?: string;
   /** ポラロイド風の影なし素通し画像(キャラ画像など) */
   plain?: boolean;
   /** グロー強度の調整段階。soft/softer=plain時の弱め、strong=通常フレームの増量。省略時は標準 */
@@ -114,7 +117,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "※1 ... Twitter(現X)へ特定タグを付けて投稿されたシェルスクリプトを実行し、\nその結果をポストするbotアカウント ([Link](https://twitter.com/minyoruminyon))",
         ],
         images: [
-          { image: discordBot, alt: "Discord-Processing Botのデモ", playOverlay: true },
+          { image: discordBot, alt: "Discord-Processing Botのデモ", playOverlay: true, video: discordBotVideo },
         ],
         links: [
           { label: "Github", url: "https://github.com/Oxypetalum7/Discord-Processngbot" },
