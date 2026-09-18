@@ -1,0 +1,10 @@
+// Cloudflare Workers (静的アセット配信) の設定
+// ビルド成果物 dist/ をそのまま静的サイトとして配信する
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "my-portfolio",
+  "compatibility_date": "2026-09-18",
+  "assets": {
+    "directory": "./dist"
+  }
+}
