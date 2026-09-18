@@ -49,6 +49,8 @@ export interface WorkImage {
   playOverlay?: boolean;
   /** ポラロイド風の影なし素通し画像(キャラ画像など) */
   plain?: boolean;
+  /** グロー強度の調整段階。soft/softer=plain時の弱め、strong=通常フレームの増量。省略時は標準 */
+  glow?: "soft" | "softer" | "strong";
 }
 
 export interface WorkLink {
@@ -128,7 +130,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "「Global Game Jam」という、世界中で同時開催されるゲーム開発ハッカソンに、函館から参加した時の作品です。\n大学の友人達と二人と、チーム「ぬまるきー」として、トリオ参加しました。\nテーマ「Repair」にちなんで、覚えたてのProcessingを駆使し、\n「なおす」に因んだミニゲームを次々とこなす、バラエティゲームを作り上げました。",
           "自身はゲームタイトル画面を担当し、タイトルロゴをはじめとするアセット制作とコーディングを担当しました。\nまた、「ゲームなら音楽が欲しい！」という自身のこだわりから、タイトル画面からゲーム中まで馴染むような、\n8bit調の軽快なメインテーマ楽曲を制作、提供しました。",
         ],
-        images: [{ image: repairIt, alt: "Repair It! のタイトル画面" }],
+        images: [{ image: repairIt, alt: "Repair It! のタイトル画面", glow: "strong" }],
         links: [{ label: "Github", url: "https://github.com/Oxypetalum7/Repair-it-" }],
         soundcloudEmbed:
           "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A754415686&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
@@ -153,8 +155,8 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "チームメンバーが構築したAltBeaconライブラリによる密検知トリガーに応じて、\nぬるぬるとアマビエが滑らかに動いて「密」をお知らせしてくれます。",
         ],
         images: [
-          { image: amabieApp, alt: "Amabie Projectのアプリ画面", width: 136 },
-          { image: amabieChara, alt: "アマビエ様のキャラクター", width: 260, plain: true },
+          { image: amabieApp, alt: "Amabie Projectのアプリ画面", width: 136, plain: true, glow: "softer" },
+          { image: amabieChara, alt: "アマビエ様のキャラクター", width: 260, plain: true, glow: "softer" },
         ],
         links: [{ label: "Github", url: "https://github.com/FunLocks/team2003" }],
       },
@@ -169,7 +171,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "アジャイル開発のプラクティスを駆使しながら、解決手法を自らに問い続けた結果、\n「オンライン化でも“未来大”を感じられる、新しいコミュニケーションプラットフォームを自分達で造ろう」\nというビジョンが立ち上がり、プロトタイピングやプロジェクト管理について模索しながら進む初年となりました。\n初年度に所属した際は、Figmaを用いたプロトタイピングデザインを制作し、\n「何をカタチにすべきか」のイメージを可視化する役割を担いました。",
           "コロナ禍を越えた今でもプロジェクトは現存しており、\n「“未来大らしさ”を抽出し、未来大の体験向上を問うプロジェクト」として、血筋が受け継がれている様です。",
         ],
-        images: [{ image: funOnline, alt: "FUN Online Interactive Platformのプロトタイプ" }],
+        images: [{ image: funOnline, alt: "FUN Online Interactive Platformのプロトタイプ", glow: "strong" }],
         links: [
           {
             label: "高度ICT演習 Webサイト (Archive)",
@@ -194,7 +196,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "スクラムマスターとしてチームの調律に挑みつつ、AltBeaconによるアプリ実装、Go/Vue.js/Dockerでの進行監視CMS「DID IT Observer」とAPI開発、Figmaでのアセット制作まで幅広く手を動かしました。",
           "えさん小学校の教頭先生とのスプリントレビューを重ね、2回の実地試験を実現。\n慣れ親しんだ学校を楽しそうに探索する子供達の姿は今も心に残っており、\n「良いものには技術だけでなく良いデザインが必要」という自身のプロダクト哲学が芽生えた原点です。",
         ],
-        images: [{ image: didIt, alt: "DID ITのアプリ画面", width: 200 }],
+        images: [{ image: didIt, alt: "DID ITのアプリ画面", width: 200, plain: true, glow: "softer" }],
         links: [
           {
             label: "プロジェクトWebサイト",
@@ -213,7 +215,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "そこで、当時の大学の友人が、大学側へ\n「QRコード読み取り機能/学籍番号を保持し、アンケートに入力する機能を備えたPWAサービス」\nを提案し、公認の融資プロジェクトとなったのが、RALAFの始まりです。",
           "自身もこちらのプロジェクトに参画させてもらい、Vue.jsによるローカライゼーション対応やメンテナンス、\nサポーターズ社主催の「技育展2021」への出展時プロモーションビデオ、キービジュアル制作を担当しました。",
         ],
-        images: [{ image: ralaf, alt: "RALAFのフライヤー" }],
+        images: [{ image: ralaf, alt: "RALAFのフライヤー", glow: "strong" }],
         links: [
           { label: "Youtube - 紹介動画", url: "https://www.youtube.com/watch?v=8onCwaI5igw" },
         ],
@@ -236,8 +238,8 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           "また、この作品はモノづくり系イベント「NT函館 2025」にて、アップデート版の出品を行いました。\nBGMブラッシュアップ、Mac OS対応、紹介パネルデザインなどを担当しました。",
         ],
         images: [
-          { image: shougekiLogo, alt: "笑撃のタイトルロゴ", width: 256 },
-          { image: shougekiPanel, alt: "笑撃の紹介パネル", width: 240, plain: true },
+          { image: shougekiLogo, alt: "笑撃のタイトルロゴ", width: 256, plain: true, glow: "soft" },
+          { image: shougekiPanel, alt: "笑撃の紹介パネル", width: 240, plain: true, glow: "soft" },
         ],
         links: [
           {
