@@ -28,14 +28,32 @@
             <li>iOS / Swift<br />→ <strong>1</strong> year</li>
           </ul>
         </div>
-        <ul class="h-item-list">
-          <li>Product Infrastructure</li>
-        </ul>
-        <ul class="skill-list indent-lg">
-          <li>Android / Kotlin<br />→ <strong>3</strong> + years</li>
-          <li>Kotlin Multi Platform<br />→ <strong>1</strong> + year</li>
-          <li>iOS / Swift<br />→ <strong>1</strong> year</li>
-        </ul>
+        <div class="indent-sm">
+          <p class="h-item">Product Infrastructure</p>
+          <ul class="skill-list indent">
+            <li>
+              Firebase ( Design / Implement )
+              <ul class="skill-sub-list">
+                <li>Analytics</li>
+                <li>Crashlytics</li>
+                <li>Cloud Messaging</li>
+              </ul>
+            </li>
+            <li>
+              Advertise ( Design / Implement )
+              <ul class="skill-sub-list">
+                <li>Google AdMob</li>
+              </ul>
+            </li>
+            <li>
+              DeepLink ( Design / Implement )
+              <ul class="skill-sub-list">
+                <li>AppLinks ( Android )</li>
+                <li>Universal Links ( iOS )</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="indent">
@@ -179,10 +197,6 @@
     padding-left: 16px;
   }
 
-  .indent-lg {
-    padding-left: 48px;
-  }
-
   .h-sub {
     margin: 0;
     font-size: 24px;
@@ -229,9 +243,13 @@
     font-size: 24px;
   }
 
-  /* Product Infrastructure配下のリストをPlatforms配下と同じ深さに揃える(+16px) */
-  .skill-list.indent-lg {
-    padding-left: 40px;
+  .skill-sub-list {
+    margin: 8px 0 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: disc;
   }
 
   .approach-title {
@@ -273,10 +291,6 @@
     .indent,
     .indent-sm {
       padding-left: 16px;
-    }
-
-    .indent-lg {
-      padding-left: 24px;
     }
 
     /* デスクトップの行長に合わせた手動改行はスマホでは二重折り返しになるため、
