@@ -511,6 +511,45 @@ function renderText(text: string): string {
   }
 
   @media (max-width: 700px) {
+    .works {
+      padding: 32px 0;
+    }
+
+    .work,
+    .affiliation {
+      padding-inline: 24px;
+    }
+
+    /* カンプ準拠のカード順(年号→タイトル→所属→チップ→説明→画像→Link→Comment)に
+       並び替える。work-main/work-mediaの2ブロック構造のままでは画像をComment前に
+       挟めないため、display:contentsで子要素を直接orderで並べる */
+    .work {
+      gap: 12px;
+    }
+
+    .work-main,
+    .work-media {
+      display: contents;
+    }
+
+    .period { order: 1; }
+    .work-title { order: 2; }
+    .credit { order: 3; }
+    .categories { order: 4; }
+    .summary { order: 5; }
+    .media-images { order: 6; }
+    .media-links { order: 7; }
+    .comment { order: 8; }
+    .soundcloud { order: 9; }
+
+    .media-images {
+      padding: 12px 0;
+    }
+
+    .media-links {
+      width: 100%;
+    }
+
     /* デスクトップの行長に合わせたComment本文の手動改行は、スマホでは二重折り返しに
        なるため自然な折り返しに任せる(キャッチコピーのsummaryは文単位の改行を維持) */
     .comment-body :global(br) {
