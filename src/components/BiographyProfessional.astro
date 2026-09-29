@@ -1,5 +1,13 @@
+---
+import wolfMark from "../assets/brand/wolf-mark.svg";
+---
+
 <section class="bio-pro">
   <div class="section">
+    {/* モバイル限定: Personal側のヒーローバンドと開始高さを揃える狼マークの紋章帯 */}
+    <div class="pro-hero" aria-hidden="true">
+      <img class="pro-hero-wolf" src={wolfMark.src} alt="" width="64" height="74" />
+    </div>
     <h2 class="h-section">Profile <span class="ruby">プロフィール</span></h2>
     <p class="name">木川 裕太郎 / <span class="name-en">Yutaro Kikawa</span></p>
     <p class="lead">Software Engineer</p>
@@ -271,7 +279,42 @@
     font-weight: 600;
   }
 
+  /* デスクトップでは非表示(モバイルの高さ合わせ専用) */
+  .pro-hero {
+    display: none;
+  }
+
   @media (max-width: 700px) {
+    /* Personal側ヒーローバンドの見せ場(Profile開始132px)と揃える: 8 + 116 + gap8 = 132 */
+    .pro-hero {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 116px;
+      opacity: 0;
+      animation: pro-hero-in 0.9s cubic-bezier(0.45, 0.05, 0.35, 1) 0.1s forwards;
+    }
+
+    .pro-hero-wolf {
+      width: 84px;
+      height: 97px;
+      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+    }
+
+    @keyframes pro-hero-in {
+      from {
+        opacity: 0;
+        filter: blur(6px);
+      }
+
+      to {
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
+
     .h-section,
     .name {
       font-size: 26px;
