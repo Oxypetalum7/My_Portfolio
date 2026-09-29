@@ -19,7 +19,19 @@ const currentPath = Astro.url.pathname;
     </span>
     <span class="brand-title">Oxypetalum7’s portfolio</span>
   </a>
-  <nav class="nav-links" aria-label="メインナビゲーション">
+  <button
+    class="menu-toggle"
+    id="menu-toggle"
+    type="button"
+    aria-expanded="false"
+    aria-controls="nav-links"
+    aria-label="メニューを開く"
+  >
+    <span class="menu-bar" aria-hidden="true"></span>
+    <span class="menu-bar" aria-hidden="true"></span>
+    <span class="menu-bar" aria-hidden="true"></span>
+  </button>
+  <nav class="nav-links" id="nav-links" aria-label="メインナビゲーション">
     {
       navItems.map((item, i) => (
         <>
@@ -132,21 +144,117 @@ const currentPath = Astro.url.pathname;
     opacity: 0.5;
   }
 
-  /* モバイル幅のみ2段組(それ以外は常に1行) */
+  /* ハンバーガーボタン。デスクトップでは非表示 */
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    margin-left: auto;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .menu-bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--color-text);
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s ease;
+  }
+
+  /* 開いている間はバーを×に変形させる */
+  .nav-header.nav-open .menu-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .nav-header.nav-open .menu-bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .nav-header.nav-open .menu-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* モバイル幅はハンバーガー+全面ドロワーに切り替える */
   @media (max-width: 860px) {
     .nav-header {
-      flex-wrap: wrap;
-      justify-content: center;
+      padding: 8px 15px 8px 24px;
     }
 
-    .nav-links {
-      padding: 0;
-      flex-wrap: wrap;
-      justify-content: center;
+    .brand-title {
+      padding-left: 12px;
+    }
+
+    .menu-toggle {
+      display: flex;
     }
 
     .nav-divider {
       display: none;
     }
+
+    .nav-links {
+      position: fixed;
+      inset: 0;
+      z-index: -1; /* ヘッダー(z-index:10)の下に潜らせ、ロゴと×は常に見せる */
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 12px;
+      padding: 112px 28px 48px;
+      background: var(--color-background-default);
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+    }
+
+    .nav-header.nav-open .nav-links {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .nav-links a {
+      padding: 8px 0;
+      font-size: 18px;
+      letter-spacing: 1.8px;
+    }
   }
 </style>
+
+<script>
+  // ClientRouterによるSPA遷移後もDOMを取り直せるよう、astro:page-loadごとに初期化する
+  function initMenuToggle() {
+    const header = document.querySelector<HTMLElement>(".nav-header");
+    const toggle = document.getElementById("menu-toggle");
+    if (!header || !toggle) return;
+
+    function setOpen(open: boolean) {
+      header?.classList.toggle("nav-open", open);
+      toggle?.setAttribute("aria-expanded", String(open));
+      toggle?.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
+      // ドロワー表示中は背景のスクロールを止める
+      document.documentElement.style.overflow = open ? "hidden" : "";
+    }
+
+    toggle.addEventListener("click", () => {
+      setOpen(!header.classList.contains("nav-open"));
+    });
+
+    // リンク選択でドロワーを閉じる(SPA遷移でDOMは作り直されるが、overflow解除のため明示する)
+    for (const link of header.querySelectorAll(".nav-links a")) {
+      link.addEventListener("click", () => setOpen(false));
+    }
+  }
+
+  document.addEventListener("astro:page-load", initMenuToggle);
+</script>
