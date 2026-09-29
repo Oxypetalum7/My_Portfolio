@@ -288,9 +288,24 @@
       font-size: 32px;
     }
 
+    /* カンプ準拠: インデントは12pxステップ階層(リストはマーカー分+8px) */
     .indent,
     .indent-sm {
-      padding-left: 16px;
+      padding-left: 12px;
+    }
+
+    .h-item-list,
+    .detail-list,
+    .skill-list {
+      padding-left: 20px;
+    }
+
+    .sub-item-list {
+      padding-left: 20px;
+    }
+
+    .skill-sub-list {
+      padding-left: 12px;
     }
 
     /* デスクトップの行長に合わせた手動改行はスマホでは二重折り返しになるため、

@@ -47,6 +47,9 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
     display: flex;
     justify-content: center;
     width: 100%;
+    /* Personal側のヒーローバンドはトグルの背後まで届くため、トグルを上に出す */
+    position: relative;
+    z-index: 1;
   }
 
   .toggle {
@@ -114,12 +117,34 @@ import BiographyPersonal from "../components/BiographyPersonal.astro";
 
   @media (max-width: 700px) {
     .biography {
-      padding: 32px 36px;
+      padding: 32px 24px;
+    }
+
+    /* カンプ準拠: 342×44・角丸8/6・ラベル14px(コンポーネント比率を44px高に換算) */
+    .toggle {
+      gap: 10px;
+      padding: 5px;
+      border-radius: 8px;
+      width: min(342px, 100%);
+      margin-inline: auto;
+    }
+
+    .toggle-thumb {
+      top: 5px;
+      bottom: 5px;
+      left: 5px;
+      width: calc(50% - 10px);
+      border-radius: 6px;
+    }
+
+    .biography[data-side="personal"] .toggle-thumb {
+      transform: translateX(calc(100% + 10px));
     }
 
     .toggle-option {
-      padding: 12px 8px;
-      font-size: 18px;
+      padding: 8px 4px;
+      border-radius: 6px;
+      font-size: 14px;
     }
   }
 </style>
