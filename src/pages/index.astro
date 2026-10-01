@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Splash from "../components/Splash.astro";
 import updates from "../data/updates.json";
+import announcements from "../data/announcements.json";
 import iconDefaultRaw from "../assets/brand/gekkabijin-default.svg?raw";
 import iconBezierRaw from "../assets/brand/gekkabijin-bezier.svg?raw";
 import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
@@ -24,8 +25,24 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
     <div class="home-blocks">
       <div class="home-block">
         <h2 class="block-title">- Info -</h2>
-        <p class="brewing-en" data-status-en>Still brewing.</p>
-        <p class="brewing-ja" data-status-ja>まだ煮詰め中。</p>
+        {
+          announcements.length > 0 && (
+            <ul class="announcements">
+              {announcements.map((a) => (
+                <li>
+                  <span class="announce-head">
+                    <span class="update-date">▶︎ {a.date}</span>
+                    {` - ${a.text}`}
+                  </span>
+                  {a.note && <span class="announce-note">{a.note}</span>}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        {/* お知らせ空白時のステータス文言。実装は保持しつつ、表示はhiddenで消している */}
+        <p class="brewing-en" data-status-en hidden>Still brewing.</p>
+        <p class="brewing-ja" data-status-ja hidden>まだ煮詰め中。</p>
       </div>
       <div class="home-block">
         <h2 class="block-title">- Latest Updating -</h2>
@@ -114,6 +131,30 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
   .brewing-ja {
     font-family: var(--font-jp);
     font-size: 10px;
+  }
+
+  .announcements {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .announcements li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .announce-note {
+    font-size: 10px;
+    /* URLを含む長い注記がモバイル幅でもはみ出さないように折り返す */
+    overflow-wrap: break-word;
+    word-break: break-all;
   }
 
   .updates {
