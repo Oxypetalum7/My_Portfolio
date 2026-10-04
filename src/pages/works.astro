@@ -59,48 +59,6 @@ function renderText(text: string): string {
                       <p class="comment-body" set:html={renderText(c)} />
                     ))}
                   </div>
-                  {work.soundclouds && (
-                    <div class="soundcloud">
-                      {work.soundclouds.map((track) =>
-                        track.embed ? (
-                          <div class="soundcloud-track">
-                            <iframe
-                              title="SoundCloud player"
-                              width="100%"
-                              height="300"
-                              scrolling="no"
-                              frameborder="no"
-                              allow="autoplay; encrypted-media"
-                              src={track.embed}
-                            />
-                            {track.credit && (
-                              <p class="soundcloud-credit">
-                                <a
-                                  href={track.credit.artistUrl}
-                                  target="_blank"
-                                  rel="noopener"
-                                >
-                                  {track.credit.artistName}
-                                </a>
-                                {" · "}
-                                <a
-                                  href={track.credit.trackUrl}
-                                  target="_blank"
-                                  rel="noopener"
-                                >
-                                  {track.credit.trackTitle}
-                                </a>
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <p class="soundcloud-placeholder">
-                            Sound Cloud Embedded Link<br />(準備中)
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  )}
                 </div>
                 <div class="work-media">
                   <div class="media-images">
@@ -137,6 +95,48 @@ function renderText(text: string): string {
                       </span>
                     ))}
                   </div>
+                  {work.soundclouds && (
+                    <div class="soundcloud">
+                      {work.soundclouds.map((track) =>
+                        track.embed ? (
+                          <div class="soundcloud-track">
+                            <iframe
+                              title="SoundCloud player"
+                              width="100%"
+                              height="166"
+                              scrolling="no"
+                              frameborder="no"
+                              allow="autoplay; encrypted-media"
+                              src={track.embed}
+                            />
+                            {track.credit && (
+                              <p class="soundcloud-credit">
+                                <a
+                                  href={track.credit.artistUrl}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
+                                  {track.credit.artistName}
+                                </a>
+                                {" · "}
+                                <a
+                                  href={track.credit.trackUrl}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
+                                  {track.credit.trackTitle}
+                                </a>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p class="soundcloud-placeholder">
+                            Sound Cloud Embedded Link<br />(準備中)
+                          </p>
+                        ),
+                      )}
+                    </div>
+                  )}
                   <div class="media-links">
                     <p class="links-head">
                       <img src={iconLink.src} alt="" width="24" height="24" />
@@ -290,8 +290,8 @@ function renderText(text: string): string {
   }
 
   .soundcloud {
-    width: min(480px, 100%);
-    margin-top: 8px;
+    width: min(468px, 100%);
+    margin-bottom: 16px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -525,7 +525,7 @@ function renderText(text: string): string {
       padding-inline: 24px;
     }
 
-    /* カンプ準拠のカード順(年号→タイトル→所属→チップ→説明→画像→Link→Comment)に
+    /* カンプ準拠のカード順(年号→タイトル→所属→チップ→説明→画像→SoundCloud→Link→Comment)に
        並び替える。work-main/work-mediaの2ブロック構造のままでは画像をComment前に
        挟めないため、display:contentsで子要素を直接orderで並べる */
     .work {
@@ -543,9 +543,9 @@ function renderText(text: string): string {
     .categories { order: 4; }
     .summary { order: 5; }
     .media-images { order: 6; }
-    .media-links { order: 7; }
-    .comment { order: 8; }
-    .soundcloud { order: 9; }
+    .soundcloud { order: 7; }
+    .media-links { order: 8; }
+    .comment { order: 9; }
 
     .media-images {
       padding: 12px 0;
