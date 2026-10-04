@@ -76,10 +76,15 @@ export interface Work {
   comments: string[];
   images: WorkImage[];
   links: WorkLink[];
-  /** SoundCloud等の埋め込みプレイヤーURL(未定はnull、非対象はundefined) */
-  soundcloudEmbed?: string | null;
-  /** SoundCloud埋め込み下のクレジット表記 */
-  soundcloudCredit?: {
+  /** SoundCloud埋め込み(上から順に表示。非対象はundefined) */
+  soundclouds?: SoundCloudTrack[];
+}
+
+export interface SoundCloudTrack {
+  /** 埋め込みプレイヤーURL(未定はnull → 「準備中」表示) */
+  embed: string | null;
+  /** 埋め込み下のクレジット表記 */
+  credit?: {
     artistName: string;
     artistUrl: string;
     trackTitle: string;
@@ -135,15 +140,19 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
         ],
         images: [{ image: repairIt, alt: "Repair It! のタイトル画面", glow: "strong" }],
         links: [{ label: "Github", url: "https://github.com/Oxypetalum7/Repair-it-" }],
-        soundcloudEmbed:
-          "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A754415686&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
-        soundcloudCredit: {
-          artistName: "きーちゃん",
-          artistUrl: "https://soundcloud.com/e_oxypetalum_7",
-          trackTitle: "Global Game Jam 2020 提出作品「Repair it!」メインテーマ",
-          trackUrl:
-            "https://soundcloud.com/e_oxypetalum_7/global-game-jam-2020-repair-it",
-        },
+        soundclouds: [
+          {
+            embed:
+              "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A754415686&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+            credit: {
+              artistName: "きーちゃん",
+              artistUrl: "https://soundcloud.com/e_oxypetalum_7",
+              trackTitle: "Global Game Jam 2020 提出作品「Repair it!」メインテーマ",
+              trackUrl:
+                "https://soundcloud.com/e_oxypetalum_7/global-game-jam-2020-repair-it",
+            },
+          },
+        ],
       },
       {
         period: "2020",
@@ -252,6 +261,28 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
           {
             label: "X - post",
             url: "https://x.com/kotambourine/status/1919198376232444057?s=20",
+          },
+        ],
+        soundclouds: [
+          {
+            embed:
+              "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1230897547&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+            credit: {
+              artistName: "きーちゃん",
+              artistUrl: "https://soundcloud.com/e_oxypetalum_7",
+              trackTitle: "Emotional ：) Battle!! (2021 ver.)",
+              trackUrl: "https://soundcloud.com/e_oxypetalum_7/emotional-battle",
+            },
+          },
+          {
+            embed:
+              "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A2412463296&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+            credit: {
+              artistName: "きーちゃん",
+              artistUrl: "https://soundcloud.com/e_oxypetalum_7",
+              trackTitle: "Emotional : ) Battle (2025 ver.)",
+              trackUrl: "https://soundcloud.com/e_oxypetalum_7/emotional-battle_v2-0",
+            },
           },
         ],
       },

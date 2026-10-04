@@ -59,43 +59,45 @@ function renderText(text: string): string {
                       <p class="comment-body" set:html={renderText(c)} />
                     ))}
                   </div>
-                  {work.soundcloudEmbed !== undefined && (
+                  {work.soundclouds && (
                     <div class="soundcloud">
-                      {work.soundcloudEmbed ? (
-                        <>
-                          <iframe
-                            title="SoundCloud player"
-                            width="100%"
-                            height="300"
-                            scrolling="no"
-                            frameborder="no"
-                            allow="autoplay; encrypted-media"
-                            src={work.soundcloudEmbed}
-                          />
-                          {work.soundcloudCredit && (
-                            <p class="soundcloud-credit">
-                              <a
-                                href={work.soundcloudCredit.artistUrl}
-                                target="_blank"
-                                rel="noopener"
-                              >
-                                {work.soundcloudCredit.artistName}
-                              </a>
-                              {" · "}
-                              <a
-                                href={work.soundcloudCredit.trackUrl}
-                                target="_blank"
-                                rel="noopener"
-                              >
-                                {work.soundcloudCredit.trackTitle}
-                              </a>
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <p class="soundcloud-placeholder">
-                          Sound Cloud Embedded Link<br />(準備中)
-                        </p>
+                      {work.soundclouds.map((track) =>
+                        track.embed ? (
+                          <div class="soundcloud-track">
+                            <iframe
+                              title="SoundCloud player"
+                              width="100%"
+                              height="300"
+                              scrolling="no"
+                              frameborder="no"
+                              allow="autoplay; encrypted-media"
+                              src={track.embed}
+                            />
+                            {track.credit && (
+                              <p class="soundcloud-credit">
+                                <a
+                                  href={track.credit.artistUrl}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
+                                  {track.credit.artistName}
+                                </a>
+                                {" · "}
+                                <a
+                                  href={track.credit.trackUrl}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
+                                  {track.credit.trackTitle}
+                                </a>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p class="soundcloud-placeholder">
+                            Sound Cloud Embedded Link<br />(準備中)
+                          </p>
+                        ),
                       )}
                     </div>
                   )}
@@ -290,6 +292,9 @@ function renderText(text: string): string {
   .soundcloud {
     width: min(480px, 100%);
     margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .soundcloud iframe {
