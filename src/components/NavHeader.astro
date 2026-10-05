@@ -49,6 +49,37 @@ const currentPath = Astro.url.pathname;
   </nav>
 </header>
 
+<script is:inline>
+  // バンドルされるscript(type=module)はHTMLを最後まで読み終えてから動くため、モバイル回線では
+  // 「メニューは見えているのに押せない」時間ができる。ボタンの直後で即座にdocumentへクリックを
+  // 委譲し、読み込み途中から押せるようにする。ClientRouterは遷移のたびにこのscriptを再実行するので、
+  // 登録は一度だけにする(委譲なのでSPA遷移でDOMが作り直されてもそのまま効く)
+  if (!window.__navMenuBound) {
+    window.__navMenuBound = true;
+
+    const setOpen = (header, open) => {
+      const toggle = header.querySelector("#menu-toggle");
+      header.classList.toggle("nav-open", open);
+      toggle?.setAttribute("aria-expanded", String(open));
+      toggle?.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
+      // ドロワー表示中は背景のスクロールを止める
+      document.documentElement.style.overflow = open ? "hidden" : "";
+    };
+
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const header = target?.closest(".nav-header");
+      if (!header) return;
+      if (target.closest("#menu-toggle")) {
+        setOpen(header, !header.classList.contains("nav-open"));
+      } else if (target.closest(".nav-links a")) {
+        // リンク選択でドロワーを閉じる(SPA遷移でDOMは作り直されるが、overflow解除のため明示する)
+        setOpen(header, false);
+      }
+    });
+  }
+</script>
+
 <style>
   .nav-header {
     display: flex;
@@ -157,6 +188,8 @@ const currentPath = Astro.url.pathname;
     border: none;
     background: none;
     cursor: pointer;
+    /* iOSで素早く開閉した2回目のタップが、ダブルタップズームに吸われないようにする */
+    touch-action: manipulation;
   }
 
   .menu-bar {
@@ -230,31 +263,3 @@ const currentPath = Astro.url.pathname;
     }
   }
 </style>
-
-<script>
-  // ClientRouterによるSPA遷移後もDOMを取り直せるよう、astro:page-loadごとに初期化する
-  function initMenuToggle() {
-    const header = document.querySelector<HTMLElement>(".nav-header");
-    const toggle = document.getElementById("menu-toggle");
-    if (!header || !toggle) return;
-
-    function setOpen(open: boolean) {
-      header?.classList.toggle("nav-open", open);
-      toggle?.setAttribute("aria-expanded", String(open));
-      toggle?.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
-      // ドロワー表示中は背景のスクロールを止める
-      document.documentElement.style.overflow = open ? "hidden" : "";
-    }
-
-    toggle.addEventListener("click", () => {
-      setOpen(!header.classList.contains("nav-open"));
-    });
-
-    // リンク選択でドロワーを閉じる(SPA遷移でDOMは作り直されるが、overflow解除のため明示する)
-    for (const link of header.querySelectorAll(".nav-links a")) {
-      link.addEventListener("click", () => setOpen(false));
-    }
-  }
-
-  document.addEventListener("astro:page-load", initMenuToggle);
-</script>
