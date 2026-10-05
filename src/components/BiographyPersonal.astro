@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { MOON_LANE_X, hash } from "../lib/roots";
+import { MOON_LANE_X, ROOTS_LAYERS, hash } from "../lib/roots";
 import photoSynth from "../assets/biography/photo-synth.jpg";
 import photoNature from "../assets/biography/photo-nature.jpg";
 import photoCamera from "../assets/biography/photo-camera.jpg";
@@ -21,6 +21,8 @@ import mistFar from "../assets/biography/roots/mist-far.webp";
 import mistMid from "../assets/biography/roots/mist-mid.webp";
 import skyMottle from "../assets/biography/roots/sky-mottle.webp";
 import skyNebula from "../assets/biography/roots/sky-nebula.webp";
+// 夜景のざらつき。SVGのノイズフィルタだと描画のたびにCPUで計算されるため、同じノイズを焼き付けたタイルを敷く
+import grain from "../assets/biography/roots/grain.png";
 
 // ポラロイドの写真(元は1600px幅)。表示はデスクトップで最大 338px×1.25倍、モバイルで170px程度なので、
 // 画面に合う幅のWebPを配る
@@ -241,13 +243,17 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
         {
           (["far", "mid", "near"] as const).map((depth) => (
             <>
-              <Image
-                src={rootsArt[`forest-${depth}`]}
-                class:list={["forest-layer", `forest-${depth}`]}
-                widths={[600, 1200, 1800]}
-                sizes="min(46vw, 760px)"
-                alt=""
-              />
+              {/* 画像は木のある帯だけなので、層の箱(.forest全体)の中で原画の帯の位置へ置き直す */}
+              <div class:list={["forest-layer", `forest-${depth}`]}>
+                <Image
+                  src={rootsArt[`forest-${depth}`]}
+                  class="forest-band"
+                  style={`--band-top: ${ROOTS_LAYERS[`forest-${depth}`].band[0]}`}
+                  widths={[600, 1200, 1800]}
+                  sizes="min(46vw, 760px)"
+                  alt=""
+                />
+              </div>
               {/* 奥と中・中と手前の間に靄を挟み、奥の木ほど空気に霞ませる */}
               {depth !== "near" && (
                 <Image
@@ -298,7 +304,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       </div>
       <!-- 夜景全体をわずかに色褪せさせ、細かなざらつきを載せて、レトロなタイトル画面のような質感にする -->
       <div class="retro-fade"></div>
-      <div class="retro-grain"></div>
+      <div class="retro-grain" style={`background-image: url(${grain.src})`}></div>
       <!-- 夕闇のグラデーションを花の上にも重ね、花が白からの遷移の下から現れるように見せる -->
       <div class="dusk-veil"></div>
     </div>
@@ -712,13 +718,20 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   .forest-layer {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    /* 原画の preserveAspectRatio="xMaxYMid meet" と同じ置き方(月の位置合わせもこれが前提) */
-    object-fit: contain;
-    object-position: right center;
     mask-image: var(--forest-fade);
     mix-blend-mode: overlay;
+  }
+
+  /* 原画(600×1300)を preserveAspectRatio="xMaxYMid meet" で置いた時の、帯の位置に合わせる
+     (月の位置合わせもこれが前提)。原画の表示幅 --frame-w はスクリプトが測って入れる。
+     未計測の間は幅いっぱい(縦長の夜ではほぼ常にこちら)とみなす。margin-top の % は幅基準 */
+  .forest-band {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: var(--frame-w, 100%);
+    height: auto;
+    margin-top: calc(var(--frame-w, 100%) * (var(--band-top) - 650) / 600);
   }
 
   /* 奥の層ほど暗く沈める(霞みは間に挟んだ靄が担う) */
@@ -1070,7 +1083,6 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
   /* 細かなざらつき。継ぎ目なく敷き詰められるノイズのタイルを、中間の灰色を基準にオーバーレイで重ねる */
   .retro-grain {
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
     mix-blend-mode: overlay;
     opacity: 0.55;
   }
@@ -1627,6 +1639,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       const scale = Math.min(f.width / 600, f.height / 1300);
       const laneX = f.right - (600 - lane) * scale;
       sticky.style.setProperty("--moon-x", `${laneX - sticky.getBoundingClientRect().left}px`);
+      forest.style.setProperty("--frame-w", `${600 * scale}px`);
     });
     update();
     moonObserver = new ResizeObserver(update);
@@ -1635,6 +1648,21 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
   document.addEventListener("astro:page-load", placeMoon);
   document.addEventListener("biography:sidechange", () => updateMoon());
+
+  // Rootsの夜景の画像(森・靄・夜空)は大きく、遅延読み込みのままだと夜に入る瞬間に読み込みとデコードが
+  // 重なって引っかかる。Personal側が表示されたら、手が空いた時に先に読み込んでデコードまで済ませておく
+  function warmRoots() {
+    if (document.querySelector<HTMLElement>(".biography")?.dataset.side !== "personal") return;
+    const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 200));
+    idle(() => {
+      for (const img of document.querySelectorAll<HTMLImageElement>(".night-band img")) {
+        img.loading = "eager";
+        img.decode().catch(() => {});
+      }
+    });
+  }
+
+  document.addEventListener("biography:sidechange", warmRoots);
 
   // .photo-collage は高さ0のコンテナのため threshold は使えない。
   // rootMargin で「コンテナ上端がビューポート下から35%の線を越えたら」発火させる

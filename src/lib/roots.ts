@@ -10,11 +10,13 @@ export const hash = (a: number, b: number) => {
 export const MOON_LANE_X = 360;
 
 // 画像に焼き付ける原画の層。viewBoxとpreserveAspectRatioは、ページ側で画像を
-// 同じ見え方に置く(object-fit)ためにも使う
+// 同じ見え方に置くためにも使う。
+// band は森の各層で木が描かれている縦の帯(viewBox上の y の範囲)。帯の外は透明なので、
+// 焼き付け時にこの帯だけを切り出し、デコード・描画する画素を減らす(ページ側は帯の位置に置き直す)
 export const ROOTS_LAYERS = {
-  "forest-far": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet" },
-  "forest-mid": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet" },
-  "forest-near": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet" },
+  "forest-far": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet", band: [56, 483] },
+  "forest-mid": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet", band: [440, 914] },
+  "forest-near": { viewBox: [600, 1300], preserveAspectRatio: "xMaxYMid meet", band: [846, 1300] },
   "mist-far": { viewBox: [760, 1400], preserveAspectRatio: "none" },
   "mist-mid": { viewBox: [760, 1400], preserveAspectRatio: "none" },
   "sky-mottle": { viewBox: [1600, 1400], preserveAspectRatio: "none" },
