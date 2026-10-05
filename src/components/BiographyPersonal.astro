@@ -553,6 +553,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       </svg>
       <!-- 本文の背後だけ夜空をもう一段沈め、汚しの明るい所が文字の裏で浮かないようにする -->
       <div class="text-shade"></div>
+      <!-- 左上の花影の周りだけ、夜空の汚しを無地の夜色で和らげる(花影と同じく画面に留める) -->
+      <div class="sky-calm-frame">
+        <div class="sky-calm"></div>
+      </div>
       <!-- 夜の間だけ画面右上に月を浮かべ、スクロールに合わせてゆっくり昇り、夜明けへ向けて沈ませる。
            森より奥に置き、木々の向こうに月が見える重なりにする -->
       <div class="moon-frame">
@@ -1011,6 +1015,35 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       #000 calc(100% - var(--dawn-h) - 60px),
       transparent calc(100% - var(--dawn-h) * 0.4)
     );
+  }
+
+  /* 花影の背後の汚しを和らげる。夜の背景(と本文側の沈め)に近い無地の色を、花影の大きさに合わせた
+     楕円で左上から重ねる。夕闇・夜明けの区間は他の夜の層と同じくマスクで消す */
+  .sky-calm-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.5),
+      #000 calc(var(--dusk-h) + 80px),
+      #000 calc(100% - var(--dawn-h) - 60px),
+      transparent calc(100% - var(--dawn-h) * 0.4)
+    );
+  }
+
+  .sky-calm {
+    --agave-h: min(32vh, 300px);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: radial-gradient(
+      calc(var(--agave-h) * 2.1) calc(var(--agave-h) * 1.5) at 0 0,
+      rgb(12 14 54 / 0.75) 0,
+      rgb(12 14 54 / 0.55) 40%,
+      rgb(12 14 54 / 0.2) 72%,
+      transparent 100%
+    ) no-repeat;
   }
 
   /* 色の斑は光として足し、藍の上にほんのり滲ませる */
@@ -1685,7 +1718,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       --grass-h: min(46vh, 380px);
     }
 
-    .agave {
+    .agave,
+    .sky-calm {
       --agave-h: min(22vh, 180px);
     }
 
