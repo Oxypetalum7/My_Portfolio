@@ -1,0 +1,475 @@
+---
+// Roots背景の森・靄・夜空の汚しの原画。数千のパスに重いSVGフィルターがかかっており、ページに
+// インラインで置くとiPhoneのSafariがメモリ不足で落ちる(木1本に葉の<use>が約400個入れ子になる)。
+// そのためページには載せず、scripts/render-roots-artwork.mjs でこの原画を画像に焼き付けて使う。
+// 形・色を変えたら、devサーバーを起動した状態でスクリプトを実行して画像を作り直すこと
+import { MOON_LANE_X, ROOTS_LAYERS, hash, type RootsLayer } from "../lib/roots";
+// 森の下草(白固定の芝のアセット)。文字列で読み込み、<symbol>に変換して森の各層に生やす
+import forestGrassRaw from "../assets/biography/grass/grass_3.svg?raw";
+
+// Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける。
+// 月が昇り沈む縦の通り道(x = MOON_LANE_X 付近)は、どの層も木を置かずに空けておく。
+// 層は縦にしか流れないので、ここを空ければスクロール中も木が月の前を横切らない
+type Tree = { x: number; y: number; s: number };
+const forestLayers: { depth: "far" | "mid" | "near"; trees: Tree[] }[] = [
+  {
+    depth: "far",
+    trees: [
+      { x: 120, y: 150, s: 1.1 },
+      { x: 225, y: 330, s: 1.15 },
+      { x: 510, y: 130, s: 1.2 },
+      { x: 575, y: 330, s: 1.1 },
+      { x: 40, y: 400, s: 1.05 },
+    ],
+  },
+  {
+    depth: "mid",
+    trees: [
+      { x: 90, y: 560, s: 1.6 },
+      { x: 545, y: 540, s: 1.65 },
+      { x: 195, y: 770, s: 1.75 },
+      { x: 590, y: 800, s: 1.7 },
+    ],
+  },
+  {
+    depth: "near",
+    trees: [
+      { x: 100, y: 1030, s: 2.3 },
+      { x: 590, y: 990, s: 2.4 },
+      { x: 160, y: 1250, s: 2.5 },
+      { x: 575, y: 1240, s: 2.3 },
+    ],
+  },
+];
+
+// 筆致の葉の形(白固定のSVGアセット)を<symbol>に変換する。白のfillを外して外からグラデーションを
+// 流し込めるようにし、アセット内のid(例: leaf4のスタンプ)は葉ごとに接頭辞を付けて衝突を避ける
+const leafFiles = import.meta.glob<string>("../assets/biography/leaves/*.svg", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+const leafSymbols = Object.keys(leafFiles)
+  .sort()
+  .map((path, i) => {
+    const raw = leafFiles[path];
+    const id = `leaf-${i}`;
+    const width = raw.match(/width="([\d.]+)"/)?.[1];
+    const height = raw.match(/height="([\d.]+)"/)?.[1];
+    const inner = raw
+      .replace(/^[\s\S]*?<svg[^>]*>/, "")
+      .replace(/<\/svg>\s*$/, "")
+      .replaceAll('fill="#fff"', "")
+      .replaceAll(/ data-figma-[\w-]+="[^"]*"/g, "")
+      .replaceAll(/id="([^"]+)"/g, `id="${id}-$1"`)
+      .replaceAll(/href="#([^"]+)"/g, `href="#${id}-$1"`);
+    return { id, viewBox: `0 0 ${width} ${height}`, inner };
+  });
+
+// 森の下草(白固定の芝のアセット)。葉と同じく白のfillを外し、外からグラデーションで塗る
+const forestGrass = {
+  viewBox: forestGrassRaw.match(/viewBox="([^"]+)"/)![1],
+  inner: forestGrassRaw
+    .replace(/^[\s\S]*?<svg[^>]*>/, "")
+    .replace(/<\/svg>\s*$/, "")
+    .replaceAll('fill="white"', ""),
+};
+const [, , GRASS_W, GRASS_H] = forestGrass.viewBox.split(" ").map(Number);
+
+// 下草の株。各木の根元に3〜5株を寄せて茂らせ、木と木の間にも株を散らす。
+// 月の通り道には生やさない(縦に流れて月の前を横切るため)。下端が地面の線になるよう配置する
+type Tuft = { x: number; y: number; w: number; flip: boolean };
+const LANE_HALF = 75;
+// 木の間の株のうち、木の葉の上に生えて浮いて見えたものは個別にむしる(「層-番号」で指定)
+const PLUCKED_TUFTS = new Set(["far-2", "mid-4"]);
+const forestTufts = forestLayers.map((layer, li) => {
+  const tufts: Tuft[] = [];
+  const add = (x: number, y: number, w: number, seed: number) => {
+    if (Math.abs(x - MOON_LANE_X) < LANE_HALF + w / 2) return;
+    tufts.push({ x, y, w, flip: hash(seed, 9) < 0.5 });
+  };
+  layer.trees.forEach((t, ti) => {
+    const ground = t.y + 62 * t.s;
+    [-0.55, -0.25, 0, 0.28, 0.55].forEach((o, k) => {
+      const seed = li * 100 + ti * 10 + k;
+      if (k !== 2 && hash(seed, 1) < 0.3) return;
+      const w = 100 * t.s * (0.55 + hash(seed, 2) * 0.35);
+      add(t.x + o * 100 * t.s + (hash(seed, 3) - 0.5) * 12 * t.s, ground + (hash(seed, 4) - 0.5) * 8 * t.s, w, seed);
+    });
+  });
+  // 木の間の株。層の木の大きさを基準に、層の縦の範囲へ散らす
+  const s = layer.trees[0].s;
+  const ys = layer.trees.map((t) => t.y + 62 * t.s);
+  const [top, bottom] = [Math.min(...ys) - 40 * s, Math.max(...ys) + 20 * s];
+  for (let i = 0; i < 5; i++) {
+    if (PLUCKED_TUFTS.has(`${layer.depth}-${i}`)) continue;
+    const seed = li * 1000 + i;
+    add(20 + hash(seed, 5) * 560, top + hash(seed, 6) * (bottom - top), 100 * s * (0.4 + hash(seed, 7) * 0.3), seed);
+  }
+  // 奥(上)の株から描き、手前(下)の株を重ねる
+  return tufts.sort((a, b) => a.y - b.y);
+});
+
+// 木は「葉の塊(clump)」を円錐状の範囲にばらばらに散らして描く。段を規則的に積むと
+// 渦巻き状に見えるため、塊の位置・大きさ・色味・木の傾きをvariantごとに不揃いにする。
+// 各塊は「影の土台 → 色の明部 → 月明かりの点」の3層
+type Ellipse = { cx: number; cy: number; rx: number; ry: number };
+type Clump = { base: Ellipse; light: Ellipse; tone: number; olive?: Ellipse; highlights: Ellipse[] };
+type Tree = { mass: Ellipse[]; clumps: Clump[] };
+const CLUMP_COUNT = 96;
+// 明部の色味(0=琥珀・1=赤橙・2=淡いクリーム・3=くすんだ緑)の出現率。クリームは差し色程度に抑える
+const pickTone = (x: number) => (x < 0.4 ? 0 : x < 0.63 ? 1 : x < 0.72 ? 2 : 3);
+// 楕円の配置枠に葉の形を当てはめる(縦横比は保つ)。葉の形には余白があるため枠を少し広げ、
+// 形の選択と左右反転は座標から決める
+const LEAF_SPREAD = 1.45;
+const leafStamp = (e: Ellipse) => {
+  const seed = e.cx * 13.7 + e.cy * 7.3;
+  const leaf = leafSymbols[Math.floor(hash(seed, 3) * leafSymbols.length)];
+  const rx = e.rx * LEAF_SPREAD;
+  const ry = e.ry * LEAF_SPREAD;
+  return {
+    href: `#${leaf.id}`,
+    x: e.cx - rx,
+    y: e.cy - ry,
+    width: rx * 2,
+    height: ry * 2,
+    transform: hash(seed, 4) < 0.5 ? `translate(${e.cx * 2} 0) scale(-1 1)` : undefined,
+  };
+};
+
+const treeVariants = [0, 1, 2].map((v): Tree => {
+  const lean = (hash(v, 1) - 0.5) * 14;
+  const clumps: Clump[] = [];
+  for (let i = 0; i < CLUMP_COUNT; i++) {
+    const r = (n: number) => hash(v * 100 + i, n);
+    const t = (i + r(1) * 0.8) / CLUMP_COUNT; // 0=頂部, 1=根元
+    const halfWidth = 7 + 34 * t ** 0.85;
+    const rx = 4 + 8 * t + r(2) * 3.5;
+    const ry = rx * (0.55 + r(3) * 0.2);
+    const cx = 50 + lean * (1 - t) + (r(4) * 2 - 1) * halfWidth * 0.78;
+    const cy = 14 + t * 112 + (r(5) - 0.5) * 6;
+    const clump: Clump = {
+      base: { cx, cy, rx, ry },
+      light: { cx: cx - rx * 0.1, cy: cy - ry * 0.32, rx: rx * 0.74, ry: ry * 0.58 },
+      tone: pickTone(r(6)),
+      highlights: [],
+    };
+    if (r(7) < 0.12) {
+      clump.olive = { cx: cx + rx * 0.35, cy: cy - ry * 0.05, rx: rx * 0.22, ry: ry * 0.22 };
+    }
+    // 上の方の塊ほど月明かりを多く受ける
+    const dabs = Math.round((1 - t) * 2 + r(8) * 1.5);
+    for (let k = 0; k < dabs; k++) {
+      const d = rx * (0.06 + r(10 + k) * 0.07);
+      clump.highlights.push({
+        cx: cx + (r(20 + k) - 0.6) * rx * 0.9,
+        cy: cy - ry * (0.55 + r(30 + k) * 0.3),
+        rx: d * 1.4,
+        ry: d,
+      });
+    }
+    clumps.push(clump);
+  }
+  // 塊の隙間から夜空が覗かないよう、木の芯に沿って暗い土台を敷く
+  const mass: Ellipse[] = [];
+  for (let k = 0; k < 6; k++) {
+    const t = (k + 0.5) / 6;
+    const rx = 6 + 30 * t ** 0.9;
+    mass.push({ cx: 50 + lean * (1 - t), cy: 18 + t * 96, rx: rx * 0.9, ry: rx * 0.5 + 5 });
+  }
+  // 奥(上)の塊から描き、手前(下)の塊を重ねる
+  return { mass, clumps: clumps.sort((a, b) => a.base.cy - b.base.cy) };
+});
+
+interface Props {
+  layer: RootsLayer;
+}
+
+const { layer } = Astro.props;
+const { viewBox, preserveAspectRatio } = ROOTS_LAYERS[layer];
+const forestIndex = forestLayers.findIndex((l) => `forest-${l.depth}` === layer);
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox={`0 0 ${viewBox[0]} ${viewBox[1]}`}
+  preserveAspectRatio={preserveAspectRatio}
+  width="100%"
+  height="100%"
+>
+  <defs>
+    <!-- 土台: 錆色から夜の紫へ沈む。明部: 琥珀・赤橙・淡いクリーム・くすんだ緑の4色味(いずれも夜に合わせ寒色寄り) -->
+    <linearGradient id="tree-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c66434" />
+      <stop offset="0.45" stop-color="#7d2e3e" />
+      <stop offset="1" stop-color="#2f1a57" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="tree-light-0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#edcd69" />
+      <stop offset="0.6" stop-color="#db8b42" />
+      <stop offset="1" stop-color="#b75533" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="tree-light-1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ea965c" />
+      <stop offset="0.6" stop-color="#c9513e" />
+      <stop offset="1" stop-color="#8f3241" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="tree-light-3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fa678" />
+      <stop offset="0.6" stop-color="#65724c" />
+      <stop offset="1" stop-color="#394640" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="tree-light-2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e1d7ce" />
+      <stop offset="0.6" stop-color="#dcb86f" />
+      <stop offset="1" stop-color="#c38449" stop-opacity="0.4" />
+    </linearGradient>
+    <!-- 水彩風の仕上げ: 筆の擦れ → 色ムラ → 縁の溜まり → 紙のざらつき(輪郭のにじみは葉アセットの質感に任せる) -->
+    <filter
+      id="tree-brush"
+      x="-15%"
+      y="-15%"
+      width="130%"
+      height="130%"
+      color-interpolation-filters="sRGB"
+    >
+      <!-- 横方向に引きずる歪みで筆の擦れを出す -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.16" numOctaves="3" seed="7" result="warp" />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="warp"
+        scale="6"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="smeared"
+      />
+      <!-- 低周波ノイズで絵の具の濃さにムラを作る -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="11" result="blot" />
+      <feColorMatrix
+        in="blot"
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -0.05"
+        result="blot-mask"
+      />
+      <feComposite in="smeared" in2="blot-mask" operator="in" result="mottled" />
+      <feComposite in="mottled" in2="smeared" operator="arithmetic" k2="0.55" k3="0.45" result="body" />
+      <!-- 縁だけを暗くし、乾いた絵の具が縁に溜まった跡を出す -->
+      <feMorphology in="body" operator="erode" radius="1.5" result="inner" />
+      <feComposite in="body" in2="inner" operator="out" result="rim" />
+      <feColorMatrix
+        in="rim"
+        type="matrix"
+        values="0.55 0 0 0 0  0 0.45 0 0 0  0 0 0.6 0 0  0 0 0 0.7 0"
+        result="rim-dark"
+      />
+      <feMerge result="painted">
+        <feMergeNode in="body" />
+        <feMergeNode in="rim-dark" />
+      </feMerge>
+      <!-- 紙のざらつき -->
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="3" result="grain" />
+      <feColorMatrix
+        in="grain"
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.6"
+        result="grain-mask"
+      />
+      <feComposite in="painted" in2="grain-mask" operator="in" result="speckled" />
+      <feComposite in="speckled" in2="painted" operator="arithmetic" k2="0.25" k3="0.75" />
+    </filter>
+    <!-- 靄: パーリンノイズを3段で組む。大きな靄の塊を別のノイズでうねらせて煙のように巻かせ、
+         細かな筋を重ねてたなびかせた上で、淡い青藤色の濃淡に変換する -->
+    <filter id="mist" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.003 0.011" numOctaves="4" seed="21" result="banks" />
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.018" numOctaves="2" seed="5" result="swirl" />
+      <feDisplacementMap
+        in="banks"
+        in2="swirl"
+        scale="90"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="curled"
+      />
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.06" numOctaves="3" seed="9" result="wisps" />
+      <feComposite in="curled" in2="wisps" operator="arithmetic" k2="0.8" k3="0.3" k4="-0.05" result="density" />
+      <feColorMatrix
+        in="density"
+        type="matrix"
+        values="0 0 0 0 0.9  0 0 0 0 0.92  0 0 0 0 1  3.2 0 0 0 -1.3"
+      />
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <!-- 手前側の靄。奥側と同じ模様だとパララックスでずれた時に2重写しに見えるため、乱数と細かさを変える -->
+    <filter id="mist-near" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0036 0.013" numOctaves="4" seed="47" result="banks" />
+      <feTurbulence type="fractalNoise" baseFrequency="0.007 0.02" numOctaves="2" seed="13" result="swirl" />
+      <feDisplacementMap
+        in="banks"
+        in2="swirl"
+        scale="90"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="curled"
+      />
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.07" numOctaves="3" seed="31" result="wisps" />
+      <feComposite in="curled" in2="wisps" operator="arithmetic" k2="0.8" k3="0.3" k4="-0.05" result="density" />
+      <feColorMatrix
+        in="density"
+        type="matrix"
+        values="0 0 0 0 0.9  0 0 0 0 0.92  0 0 0 0 1  3.2 0 0 0 -1.3"
+      />
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <!-- 夜空の汚し: 水彩の色ムラ。うねらせた低周波ノイズから、絵の具の溜まった暗い池・
+         薄く抜けた明るい所・池の縁に乾いて残った滲みの線を作る -->
+    <filter id="sky-mottle" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0035" numOctaves="4" seed="61" result="noise" />
+      <feTurbulence type="fractalNoise" baseFrequency="0.004 0.006" numOctaves="2" seed="17" result="swirl" />
+      <feDisplacementMap
+        in="noise"
+        in2="swirl"
+        scale="140"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="curled"
+      />
+      <!-- 暗い池 -->
+      <feColorMatrix
+        in="curled"
+        type="matrix"
+        values="0 0 0 0 0.016  0 0 0 0 0.02  0 0 0 0 0.09  2.6 0 0 0 -1.15"
+      />
+      <feGaussianBlur stdDeviation="6" result="pools" />
+      <!-- 明るく抜けた所(藤色寄り) -->
+      <feColorMatrix
+        in="curled"
+        type="matrix"
+        values="0 0 0 0 0.2  0 0 0 0 0.19  0 0 0 0 0.44  -1.8 0 0 0 0.46"
+      />
+      <feGaussianBlur stdDeviation="10" result="lifts" />
+      <!-- 池の縁の滲み: 濃さの閾値で切った形の輪郭だけを残す -->
+      <feColorMatrix
+        in="curled"
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  14 0 0 0 -7.2"
+        result="edge-shape"
+      />
+      <feMorphology in="edge-shape" operator="erode" radius="2.5" result="edge-inner" />
+      <feComposite in="edge-shape" in2="edge-inner" operator="out" result="edge" />
+      <feColorMatrix
+        in="edge"
+        type="matrix"
+        values="0 0 0 0 0.01  0 0 0 0 0.01  0 0 0 0 0.06  0 0 0 0.8 0"
+      />
+      <feGaussianBlur stdDeviation="1" result="rims" />
+      <feMerge>
+        <feMergeNode in="lifts" />
+        <feMergeNode in="pools" />
+        <feMergeNode in="rims" />
+      </feMerge>
+    </filter>
+    <!-- 夜空の汚し: 星雲のような色の混ざり。別のノイズの2チャンネルから、淡い青緑と赤紫の斑を作る -->
+    <filter id="sky-nebula" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0016 0.0028" numOctaves="3" seed="83" result="noise" />
+      <feTurbulence type="fractalNoise" baseFrequency="0.005 0.008" numOctaves="2" seed="29" result="swirl" />
+      <feDisplacementMap
+        in="noise"
+        in2="swirl"
+        scale="160"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="curled"
+      />
+      <feColorMatrix
+        in="curled"
+        type="matrix"
+        values="0 0 0 0 0.25  0 0 0 0 0.62  0 0 0 0 0.7  3.2 0 0 0 -1.62"
+      />
+      <feGaussianBlur stdDeviation="14" result="teal" />
+      <feColorMatrix
+        in="curled"
+        type="matrix"
+        values="0 0 0 0 0.68  0 0 0 0 0.3  0 0 0 0 0.62  0 2.6 0 0 -1.42"
+      />
+      <feGaussianBlur stdDeviation="14" result="magenta-full" />
+      <!-- 赤紫は青緑より控えめにする -->
+      <feComponentTransfer in="magenta-full" result="magenta">
+        <feFuncA type="linear" slope="0.5" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode in="teal" />
+        <feMergeNode in="magenta" />
+      </feMerge>
+    </filter>
+    <!-- 下草: くすんだ緑の葉先から、根元は夜の紫へ沈める -->
+    <linearGradient id="forest-grass-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c3cf86" />
+      <stop offset="0.5" stop-color="#7f8c55" />
+      <stop offset="1" stop-color="#4a3263" />
+    </linearGradient>
+    <symbol id="forest-grass" viewBox={forestGrass.viewBox} set:html={forestGrass.inner} />
+    {
+      leafSymbols.map((leaf) => (
+        <symbol id={leaf.id} viewBox={leaf.viewBox} set:html={leaf.inner} />
+      ))
+    }
+    {
+      treeVariants.map((tree, v) => (
+        <symbol id={`tree-${v}`} viewBox="0 0 100 140">
+          <g fill="#411e4f" opacity="0.85">
+            {tree.mass.map((e) => (
+              <ellipse {...e} />
+            ))}
+          </g>
+          {tree.clumps.map((clump) => (
+            <g>
+              <use {...leafStamp(clump.base)} fill="url(#tree-base)" />
+              <use {...leafStamp(clump.light)} fill={`url(#tree-light-${clump.tone})`} />
+              {clump.olive && <use {...leafStamp(clump.olive)} fill="#6f7b47" opacity="0.75" />}
+              <g fill="#e7d6bd" opacity="0.9">
+                {clump.highlights.map((e) => (
+                  <use {...leafStamp(e)} />
+                ))}
+              </g>
+            </g>
+          ))}
+        </symbol>
+      ))
+    }
+  </defs>
+  {
+    forestIndex >= 0 && (
+      <g filter="url(#tree-brush)">
+        {forestLayers[forestIndex].trees.map((t, i) => (
+          <use
+            href={`#tree-${i % treeVariants.length}`}
+            x={t.x - 50 * t.s}
+            y={t.y - 70 * t.s}
+            width={100 * t.s}
+            height={140 * t.s}
+          />
+        ))}
+        <g fill="url(#forest-grass-fill)" opacity="0.7">
+          {forestTufts[forestIndex].map((g) => {
+            const h = (g.w * GRASS_H) / GRASS_W;
+            return (
+              <use
+                href="#forest-grass"
+                x={g.x - g.w / 2}
+                y={g.y - h}
+                width={g.w}
+                height={h}
+                transform={g.flip ? `translate(${g.x * 2} 0) scale(-1 1)` : undefined}
+              />
+            );
+          })}
+        </g>
+      </g>
+    )
+  }
+  {/* 奥と中・中と手前の間に挟む靄。奥側と手前側で模様を変える */}
+  {layer === "mist-far" && <rect width="760" height="1400" filter="url(#mist)" />}
+  {layer === "mist-mid" && <rect width="760" height="1400" filter="url(#mist-near)" />}
+  {layer === "sky-mottle" && <rect width="1600" height="1400" filter="url(#sky-mottle)" />}
+  {layer === "sky-nebula" && <rect width="1600" height="1400" filter="url(#sky-nebula)" />}
+</svg>
