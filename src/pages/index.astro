@@ -376,4 +376,66 @@ import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
   }
 
   document.addEventListener("astro:page-load", initWelcomeIcon);
+
+  // Biographyは画像が多く、モバイル回線だと開いた時の表示が遅い。トップ(スプラッシュ)を見ている間に
+  // BiographyのHTMLから画像を拾って先読みしておく。ClientRouterの遷移はdocumentを作り直さないため、
+  // ここで読み込んだ画像は遷移後のBiographyでそのまま使われる。通信量を抑える設定の時は先読みしない
+  const preloadedImages: HTMLImageElement[] = []; // 参照を持ち続け、遷移までに捨てられないようにする
+  let biographyPreloaded = false;
+
+  async function preloadBiography() {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
+      .connection;
+    if (biographyPreloaded || connection?.saveData || connection?.effectiveType?.endsWith("2g")) return;
+    biographyPreloaded = true;
+    try {
+      const html = await fetch("/biography").then((res) => res.text());
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const preload = (src: string, srcset?: string | null, sizes?: string | null) => {
+        const img = new Image();
+        // ページ側と同じsrcset・sizesを渡し、実際に表示される解像度の候補を選ばせる
+        if (sizes) img.sizes = sizes;
+        if (srcset) img.srcset = srcset;
+        img.src = src;
+        preloadedImages.push(img);
+      };
+      for (const img of doc.querySelectorAll("main img")) {
+        const src = img.getAttribute("src");
+        if (src) preload(src, img.getAttribute("srcset"), img.getAttribute("sizes"));
+      }
+      // ページ固有のCSS(遷移はこれを読み終えるまで待つ)と、その中のフォント(Nowの鉄瓶ゴシック)。
+      // 共通CSSは読み込み済みで、中のフォントは使う文字の分だけブラウザが取るので触らない
+      for (const link of doc.querySelectorAll<HTMLLinkElement>("link[rel='stylesheet']")) {
+        const href = link.getAttribute("href");
+        if (!href || document.querySelector(`link[rel='stylesheet'][href='${href}']`)) continue;
+        const css = await fetch(href).then((res) => res.text());
+        for (const [, font] of css.matchAll(/url\(['"]?([^'")]+\.woff2)/g)) {
+          fetch(new URL(font, new URL(href, location.href)));
+        }
+      }
+      // 草の影・リュウゼツランはCSSマスクの型としてstyle属性のurl()で渡している
+      for (const el of doc.querySelectorAll<HTMLElement>("main [style*='url(']")) {
+        for (const [, url] of el.getAttribute("style")!.matchAll(/url\((?!['"]?data:)['"]?([^'")]+)/g)) {
+          preload(url);
+        }
+      }
+    } catch {
+      biographyPreloaded = false;
+    }
+  }
+
+  // トップ自体の読み込みを邪魔しないよう、読み込み完了後の手すきの時間に始める(手すきにならなくても2秒で始める)
+  function schedulePreloadBiography() {
+    // 非表示のタブでは手すきの通知が来ないことがあるため、タイマーと早い方で始める(2回目は無視される)
+    const start = () => {
+      if ("requestIdleCallback" in window) requestIdleCallback(() => preloadBiography());
+      setTimeout(preloadBiography, 2000);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    if (document.querySelector(".home")) schedulePreloadBiography();
+  });
 </script>
