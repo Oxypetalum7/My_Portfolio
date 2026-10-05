@@ -426,6 +426,87 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
             />
             <feGaussianBlur stdDeviation="3" />
           </filter>
+          <!-- 夜空の汚し: 水彩の色ムラ。うねらせた低周波ノイズから、絵の具の溜まった暗い池・
+               薄く抜けた明るい所・池の縁に乾いて残った滲みの線を作る -->
+          <filter id="sky-mottle" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0035" numOctaves="4" seed="61" result="noise" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.004 0.006" numOctaves="2" seed="17" result="swirl" />
+            <feDisplacementMap
+              in="noise"
+              in2="swirl"
+              scale="140"
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="curled"
+            />
+            <!-- 暗い池 -->
+            <feColorMatrix
+              in="curled"
+              type="matrix"
+              values="0 0 0 0 0.016  0 0 0 0 0.02  0 0 0 0 0.09  2.6 0 0 0 -1.15"
+            />
+            <feGaussianBlur stdDeviation="6" result="pools" />
+            <!-- 明るく抜けた所(藤色寄り) -->
+            <feColorMatrix
+              in="curled"
+              type="matrix"
+              values="0 0 0 0 0.2  0 0 0 0 0.19  0 0 0 0 0.44  -1.8 0 0 0 0.46"
+            />
+            <feGaussianBlur stdDeviation="10" result="lifts" />
+            <!-- 池の縁の滲み: 濃さの閾値で切った形の輪郭だけを残す -->
+            <feColorMatrix
+              in="curled"
+              type="matrix"
+              values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  14 0 0 0 -7.2"
+              result="edge-shape"
+            />
+            <feMorphology in="edge-shape" operator="erode" radius="2.5" result="edge-inner" />
+            <feComposite in="edge-shape" in2="edge-inner" operator="out" result="edge" />
+            <feColorMatrix
+              in="edge"
+              type="matrix"
+              values="0 0 0 0 0.01  0 0 0 0 0.01  0 0 0 0 0.06  0 0 0 0.8 0"
+            />
+            <feGaussianBlur stdDeviation="1" result="rims" />
+            <feMerge>
+              <feMergeNode in="lifts" />
+              <feMergeNode in="pools" />
+              <feMergeNode in="rims" />
+            </feMerge>
+          </filter>
+          <!-- 夜空の汚し: 星雲のような色の混ざり。別のノイズの2チャンネルから、淡い青緑と赤紫の斑を作る -->
+          <filter id="sky-nebula" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0016 0.0028" numOctaves="3" seed="83" result="noise" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.005 0.008" numOctaves="2" seed="29" result="swirl" />
+            <feDisplacementMap
+              in="noise"
+              in2="swirl"
+              scale="160"
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="curled"
+            />
+            <feColorMatrix
+              in="curled"
+              type="matrix"
+              values="0 0 0 0 0.25  0 0 0 0 0.62  0 0 0 0 0.7  3.2 0 0 0 -1.62"
+            />
+            <feGaussianBlur stdDeviation="14" result="teal" />
+            <feColorMatrix
+              in="curled"
+              type="matrix"
+              values="0 0 0 0 0.68  0 0 0 0 0.3  0 0 0 0 0.62  0 2.6 0 0 -1.42"
+            />
+            <feGaussianBlur stdDeviation="14" result="magenta-full" />
+            <!-- 赤紫は青緑より控えめにする -->
+            <feComponentTransfer in="magenta-full" result="magenta">
+              <feFuncA type="linear" slope="0.5" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode in="teal" />
+              <feMergeNode in="magenta" />
+            </feMerge>
+          </filter>
           <!-- 下草: くすんだ緑の葉先から、根元は夜の紫へ沈める -->
           <linearGradient id="forest-grass-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#c3cf86" />
@@ -463,6 +544,15 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           }
         </defs>
       </svg>
+      <!-- 夜空の汚し。水彩の色ムラの上に星雲のような色を重ねる(森と同じく読み込み後に画像へ焼き付ける) -->
+      <svg class="sky-wash sky-mottle" viewBox="0 0 1600 1400" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="1600" height="1400" filter="url(#sky-mottle)" />
+      </svg>
+      <svg class="sky-wash sky-nebula" viewBox="0 0 1600 1400" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="1600" height="1400" filter="url(#sky-nebula)" />
+      </svg>
+      <!-- 本文の背後だけ夜空をもう一段沈め、汚しの明るい所が文字の裏で浮かないようにする -->
+      <div class="text-shade"></div>
       <!-- 夜の間だけ画面右上に月を浮かべ、スクロールに合わせてゆっくり昇り、夜明けへ向けて沈ませる。
            森より奥に置き、木々の向こうに月が見える重なりにする -->
       <div class="moon-frame">
@@ -881,6 +971,52 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
   .forest-defs {
     position: absolute;
+  }
+
+  /* 夜空の汚し。夕闇・夜明けのグラデーションには掛けず、夜の区間にだけ敷く */
+  .sky-wash {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.5),
+      #000 calc(var(--dusk-h) + 80px),
+      #000 calc(100% - var(--dawn-h) - 60px),
+      transparent calc(100% - var(--dawn-h) * 0.4)
+    );
+  }
+
+  .sky-mottle {
+    opacity: 0.85;
+  }
+
+  /* 本文側(左)ほど暗く沈める。森のある右側には掛けない */
+  .text-shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      rgb(4 5 22 / 0.34) 0,
+      rgb(4 5 22 / 0.28) 40%,
+      transparent 62%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.5),
+      #000 calc(var(--dusk-h) + 80px),
+      #000 calc(100% - var(--dawn-h) - 60px),
+      transparent calc(100% - var(--dawn-h) * 0.4)
+    );
+  }
+
+  /* 色の斑は光として足し、藍の上にほんのり滲ませる */
+  .sky-nebula {
+    opacity: 0.4;
+    mix-blend-mode: screen;
   }
 
   /* 本文(左)にかからないよう右側の余白に森を置く。フェード区間では森も霞ませる。
@@ -1467,6 +1603,11 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       height: auto;
     }
 
+    /* 本文が全幅になるので、沈めも全幅に均して掛ける */
+    .text-shade {
+      background: rgb(4 5 22 / 0.22);
+    }
+
     /* 右余白が無くなる幅では、森を本文の背後に薄く敷く */
     .forest {
       --forest-opacity: 0.35;
@@ -1620,14 +1761,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 </style>
 
 <script>
-  // Roots背景の森・靄は、数千のパスに重いSVGフィルターがかかっており、インラインのままだと
+  // Roots背景の森・靄・夜空の汚しは、数千のパスに重いSVGフィルターがかかっており、インラインのままだと
   // スクロールのたびに再描画されて重い。defsごと独立したSVG画像に書き出して<img>に差し替え、
   // 一度だけラスタライズさせる(viewBox付きなので拡縮しても再ラスタライズで鮮明さは保たれる)
   function rasterizeForest() {
     const defs = document.querySelector(".forest-defs defs");
     if (!defs) return;
     const serializer = new XMLSerializer();
-    for (const svg of document.querySelectorAll<SVGSVGElement>(".forest-layer, .mist")) {
+    for (const svg of document.querySelectorAll<SVGSVGElement>(".forest-layer, .mist, .sky-wash")) {
       const clone = svg.cloneNode(true) as SVGSVGElement;
       clone.prepend(defs.cloneNode(true));
       clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
