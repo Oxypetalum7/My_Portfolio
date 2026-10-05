@@ -1116,14 +1116,15 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     mix-blend-mode: soft-light;
   }
 
+  /* 月暈・夜空の汚しと重なって森の辺りが白く浮かないよう、靄は控えめに敷く */
   .mist-far {
-    opacity: var(--forest-opacity);
+    opacity: calc(0.75 * var(--forest-opacity));
   }
 
   .mist-mid {
     --mist-duration: 45s;
     --mist-direction: alternate-reverse;
-    opacity: calc(0.7 * var(--forest-opacity));
+    opacity: calc(0.5 * var(--forest-opacity));
   }
 
   @keyframes mist-drift {
@@ -1230,7 +1231,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     inset: 0;
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 0 calc(var(--moon-size) * 0.06) rgb(255 246 226 / 0.7));
+    /* 周りの水彩・ざらつきから浮かないよう、縁をわずかにぼかす */
+    filter: blur(calc(var(--moon-size) * 0.007)) drop-shadow(0 0 calc(var(--moon-size) * 0.06) rgb(255 246 226 / 0.7));
   }
 
   /* 月暈。月の周りの夜空を淡く照らし、外へ行くほど青紫の夜に溶かす */
@@ -1666,6 +1668,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       position: static;
       width: min(273px, 80vw);
       height: auto;
+    }
+
+    /* 本文が全幅になり、森の通り道が段落の真後ろに来るため、月は右上の隅へ小さく逃がす */
+    .moon {
+      --moon-size: clamp(48px, 11vw, 76px);
+      top: 8vh;
+      left: auto;
+      right: max(24px, 6%);
     }
 
     /* 本文が全幅になるので、沈めも全幅に均して掛ける */
