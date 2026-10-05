@@ -7,36 +7,38 @@ import heroBand from "../assets/biography/hero-band.jpg";
 import grassRight from "../assets/biography/grass/grass_1.svg";
 import grassLeft from "../assets/biography/grass/grass_2.svg";
 
-// Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける
+// Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける。
+// 月が昇り沈む縦の通り道(x = MOON_LANE_X 付近)は、どの層も木を置かずに空けておく。
+// 層は縦にしか流れないので、ここを空ければスクロール中も木が月の前を横切らない
+const MOON_LANE_X = 360;
 type Tree = { x: number; y: number; s: number };
 const forestLayers: { depth: "far" | "mid" | "near"; trees: Tree[] }[] = [
   {
     depth: "far",
     trees: [
-      { x: 140, y: 150, s: 1.1 },
-      { x: 330, y: 110, s: 1.2 },
-      { x: 520, y: 170, s: 1.1 },
-      { x: 240, y: 330, s: 1.15 },
-      { x: 450, y: 360, s: 1.2 },
+      { x: 120, y: 150, s: 1.1 },
+      { x: 225, y: 330, s: 1.15 },
+      { x: 510, y: 130, s: 1.2 },
+      { x: 575, y: 330, s: 1.1 },
+      { x: 40, y: 400, s: 1.05 },
     ],
   },
   {
     depth: "mid",
     trees: [
       { x: 90, y: 560, s: 1.6 },
-      { x: 330, y: 520, s: 1.7 },
-      { x: 560, y: 600, s: 1.6 },
-      { x: 220, y: 760, s: 1.75 },
-      { x: 460, y: 800, s: 1.7 },
+      { x: 545, y: 540, s: 1.65 },
+      { x: 195, y: 770, s: 1.75 },
+      { x: 590, y: 800, s: 1.7 },
     ],
   },
   {
     depth: "near",
     trees: [
-      { x: 110, y: 1040, s: 2.3 },
-      { x: 380, y: 990, s: 2.4 },
-      { x: 600, y: 1100, s: 2.3 },
-      { x: 250, y: 1250, s: 2.5 },
+      { x: 100, y: 1030, s: 2.3 },
+      { x: 590, y: 990, s: 2.4 },
+      { x: 160, y: 1250, s: 2.5 },
+      { x: 575, y: 1240, s: 2.3 },
     ],
   },
 ];
@@ -406,6 +408,50 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           }
         </defs>
       </svg>
+      <!-- 夜の間だけ画面右上に月を浮かべ、スクロールに合わせてゆっくり昇り、夜明けへ向けて沈ませる。
+           森より奥に置き、木々の向こうに月が見える重なりにする -->
+      <div class="moon-frame">
+        <div class="moon-sticky" data-lane={MOON_LANE_X}>
+          <div class="moon">
+            <div class="moon-halo"></div>
+            <svg class="moon-disc" viewBox="0 0 200 200">
+              <defs>
+                <!-- 周縁減光: 中心ほど明るく、縁へ向けて藤色に沈む -->
+                <radialGradient id="moon-shade" cx="44%" cy="40%" r="62%">
+                  <stop offset="0" stop-color="#fffbef" />
+                  <stop offset="0.55" stop-color="#ebe5d8" />
+                  <stop offset="1" stop-color="#bdb4d3" />
+                </radialGradient>
+                <!-- 海(暗い模様)。ノイズを閾値で切って、まだらな影にする -->
+                <filter id="moon-maria" x="0" y="0" width="100%" height="100%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" />
+                  <feColorMatrix
+                    type="matrix"
+                    values="0 0 0 0 0.55  0 0 0 0 0.52  0 0 0 0 0.62  0 0 0 -2.4 1.25"
+                  />
+                  <feGaussianBlur stdDeviation="2" />
+                </filter>
+                <!-- 細かな凹凸 -->
+                <filter id="moon-grain" x="0" y="0" width="100%" height="100%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="2" seed="3" />
+                  <feColorMatrix
+                    type="matrix"
+                    values="0 0 0 0 0.5  0 0 0 0 0.48  0 0 0 0 0.56  0 0 0 -1.6 0.95"
+                  />
+                </filter>
+                <clipPath id="moon-clip">
+                  <circle cx="100" cy="100" r="96" />
+                </clipPath>
+              </defs>
+              <g clip-path="url(#moon-clip)">
+                <rect width="200" height="200" fill="url(#moon-shade)" />
+                <rect width="200" height="200" filter="url(#moon-maria)" opacity="0.72" />
+                <rect width="200" height="200" filter="url(#moon-grain)" opacity="0.18" />
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
       <div class="forest">
         {
           forestLayers.map((layer) => (
@@ -698,6 +744,17 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     color: #e6e1f3;
   }
 
+  /* 文字の周りだけ夜色の影で縁取る。背景は覆わず、月や森の灯り・草の上に来た文字だけが
+     暗いにじみで浮き上がる(狭い画面では森・月が本文の真後ろに回るので特に効く) */
+  .roots-night .h-section,
+  .desc-block.roots {
+    text-shadow:
+      0 0 2px rgb(5 6 26 / 1),
+      0 0 4px rgb(5 6 26 / 0.9),
+      0 0 8px rgb(5 6 26 / 0.85),
+      0 0 16px rgb(5 6 26 / 0.7);
+  }
+
   .roots-night .ruby {
     color: #a99fcf;
   }
@@ -877,6 +934,106 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     to {
       transform: translateY(calc(var(--drift) * -1));
+    }
+  }
+
+  /* 月。草と同じくstickyで夜の間は画面に留め、--roots の進み具合で弧を描いて昇り沈む。
+     夕闇・夜明けのグラデーションの上には出さず、空が暗い所でだけ見えるよう位置基準でマスクする
+     (スクロール連動が使えない環境では、南中の位置に置いたままこのマスクだけで出入りさせる) */
+  .moon-frame {
+    --moon-mask: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.55),
+      #000 calc(var(--dusk-h) + 60px),
+      #000 calc(100% - var(--dawn-h) - 120px),
+      transparent calc(100% - var(--dawn-h))
+    );
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mask-image: var(--moon-mask);
+  }
+
+  .moon-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  /* 横位置は森の通り道に合わせてスクリプトが --moon-x に入れる(未計測の間は右寄りの仮位置) */
+  .moon {
+    --moon-size: clamp(72px, 7.5vw, 128px);
+    position: absolute;
+    top: 13vh;
+    left: calc(var(--moon-x, 76%) - var(--moon-size) / 2);
+    width: var(--moon-size);
+    aspect-ratio: 1;
+  }
+
+  .moon-disc {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 calc(var(--moon-size) * 0.06) rgb(255 246 226 / 0.7));
+  }
+
+  /* 月暈。月の周りの夜空を淡く照らし、外へ行くほど青紫の夜に溶かす */
+  .moon-halo {
+    position: absolute;
+    inset: -260%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgb(244 238 255 / 0.7) 0,
+      rgb(200 188 248 / 0.36) 12%,
+      rgb(146 130 224 / 0.16) 26%,
+      rgb(104 90 194 / 0.06) 42%,
+      transparent 62%
+    );
+    mix-blend-mode: screen;
+  }
+
+  @supports (animation-timeline: view()) {
+    .moon {
+      animation: moon-arc linear both;
+      animation-timeline: --roots;
+      /* 夜が画面の1/4ほどを満たしてから昇り始め、夜の背景の下端が画面下に着く頃に沈み切る */
+      animation-range: cover calc(var(--night-fade-in) + 25vh) exit 0%;
+    }
+  }
+
+  /* 森の通り道の奥から昇り、南中を過ぎたら夜明けの方へ沈む。
+     横に流すと通り道の脇の木に掛かるため、縦の動きだけにする */
+  @keyframes moon-arc {
+    0% {
+      opacity: 0;
+      translate: 0 34vh;
+    }
+
+    12% {
+      opacity: 1;
+    }
+
+    30% {
+      translate: 0 7vh;
+    }
+
+    50% {
+      translate: 0 0;
+    }
+
+    70% {
+      translate: 0 7vh;
+    }
+
+    88% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      translate: 0 34vh;
     }
   }
 
@@ -1115,13 +1272,18 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     .forest-layer,
     .mist,
-    .grass-sticky {
+    .grass-sticky,
+    .moon {
       animation: none !important;
     }
 
     /* スクロール連動のフェードを止めるため、位置基準のマスクに戻す */
     .grass-frame {
       mask-image: var(--grass-mask) !important;
+    }
+
+    .moon-frame {
+      mask-image: var(--moon-mask) !important;
     }
 
     .firefly {
@@ -1152,7 +1314,6 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       --forest-opacity: 0.35;
       width: 100%;
     }
-
   }
 
   @media (max-width: 700px) {
@@ -1210,10 +1371,6 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     .desc,
     .desc-block {
       padding-left: 12px;
-    }
-
-    .desc-block.roots {
-      padding-left: 0;
     }
 
     .roots-night {
@@ -1328,6 +1485,32 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   }
 
   document.addEventListener("astro:page-load", rasterizeForest);
+
+  // 月を森の通り道(viewBox上の x = data-lane)の真上に置く。森はxMaxYMid meetで描かれるので、
+  // 表示倍率を求めて通り道の画面上の位置を割り出す。森の大きさが変わるたびと、
+  // Personal側が表示された時(非表示の間は測れない)に測り直す
+  let moonObserver: ResizeObserver | undefined;
+  let updateMoon = () => {};
+  function placeMoon() {
+    moonObserver?.disconnect();
+    const forest = document.querySelector<HTMLElement>(".forest");
+    const sticky = document.querySelector<HTMLElement>(".moon-sticky");
+    if (!forest || !sticky) return;
+    const lane = Number(sticky.dataset.lane);
+    const update = (updateMoon = () => {
+      const f = forest.getBoundingClientRect();
+      if (f.width === 0) return;
+      const scale = Math.min(f.width / 600, f.height / 1300);
+      const laneX = f.right - (600 - lane) * scale;
+      sticky.style.setProperty("--moon-x", `${laneX - sticky.getBoundingClientRect().left}px`);
+    });
+    update();
+    moonObserver = new ResizeObserver(update);
+    moonObserver.observe(forest);
+  }
+
+  document.addEventListener("astro:page-load", placeMoon);
+  document.addEventListener("biography:sidechange", () => updateMoon());
 
   // .photo-collage は高さ0のコンテナのため threshold は使えない。
   // rootMargin で「コンテナ上端がビューポート下から35%の線を越えたら」発火させる
