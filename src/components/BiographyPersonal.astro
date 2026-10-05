@@ -3,6 +3,9 @@ import photoSynth from "../assets/biography/photo-synth.jpg";
 import photoNature from "../assets/biography/photo-nature.jpg";
 import photoCamera from "../assets/biography/photo-camera.jpg";
 import heroBand from "../assets/biography/hero-band.jpg";
+// 草の影(白固定)。grass_1が右端用、grass_2が左端用。CSSマスクの型として使い、色は外から塗る
+import grassRight from "../assets/biography/grass/grass_1.svg";
+import grassLeft from "../assets/biography/grass/grass_2.svg";
 
 // Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける
 type Tree = { x: number; y: number; s: number };
@@ -138,6 +141,18 @@ const treeVariants = [0, 1, 2].map((v): Tree => {
   // 奥(上)の塊から描き、手前(下)の塊を重ねる
   return { mass, clumps: clumps.sort((a, b) => a.base.cy - b.base.cy) };
 });
+
+// 草の影の株。左右それぞれ「奥(小・内側・薄い) → 中 → 手前(大・外側・濃い)」の順に重ねて生い茂らせる。
+// 2枚のアセットを反転・拡縮して使い回す。x は画面端からの位置(草の基準高さに対する比率、負で画面外)。
+// 右側は森にかからないよう、内側へ張り出さず外向きに傾く株で揃える。tilt は根元を軸にした時計回りの回転(deg)
+const grassClumps = [
+  { side: "left", asset: grassLeft, scale: 0.58, x: 0.26, flip: true, shade: 0.5 },
+  { side: "left", asset: grassRight, scale: 0.8, x: 0, flip: true, shade: 0.72 },
+  { side: "left", asset: grassLeft, scale: 1, x: -0.2, flip: false, shade: 0.92 },
+  { side: "right", asset: grassRight, scale: 0.56, x: 0.16, flip: false, shade: 0.5 },
+  { side: "right", asset: grassLeft, scale: 0.82, x: 0.02, flip: true, shade: 0.72, tilt: 10 },
+  { side: "right", asset: grassRight, scale: 1, x: -0.14, flip: false, shade: 0.92 },
+] as const;
 
 // 蛍火(青紫の光の粒)
 const fireflies = Array.from({ length: 28 }, (_, i) => {
@@ -437,6 +452,21 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           ))
         }
       </div>
+      <!-- 夜の間だけ画面の左右下に草の影を貼り付け、物陰から夜の森を覗き込む構図にする -->
+      <div class="grass-frame">
+        <div class="grass-sticky">
+          {
+            grassClumps.map((g) => (
+              <div
+                class:list={["grass", { flip: g.flip }]}
+                style={`--grass: url(${g.asset.src}); --grass-ratio: ${g.asset.width} / ${g.asset.height}; --scale: ${g.scale}; --shade: ${g.shade}; --tilt: ${"tilt" in g ? g.tilt : 0}deg; ${g.side}: calc(var(--grass-h) * ${g.x})`}
+              />
+            ))
+          }
+        </div>
+      </div>
+      <!-- 夜明けのグラデーションを草の上にも重ね、草が白への遷移の下に沈んでいくように見せる -->
+      <div class="dawn-veil"></div>
     </div>
     <h2 class="h-section">Roots <span class="ruby">どうしても忘れられない、原体験</span></h2>
     <div class="indent">
@@ -660,6 +690,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   .roots-night {
     --night-fade-in: 200px;
     --night-fade-out: 260px;
+    /* 夕闇の遷移はパディングより下(見出しの裏)まで延ばし、長い助走で夜へ沈める */
+    --dusk-h: calc(var(--night-fade-in) * 1.4);
+    /* 夜明けの遷移はパディングより上(本文の下端)から始め、長い助走で白へ馴染ませる */
+    --dawn-h: calc(var(--night-fade-out) * 1.4);
     padding: var(--night-fade-in) 0 var(--night-fade-out);
     color: #e6e1f3;
   }
@@ -676,15 +710,31 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     overflow: clip;
     background: linear-gradient(
       to bottom,
+      /* 夕闇: 白→藤→藍を滑らかな曲線で刻み、途中や終点で勾配が折れて線に見えないようにする */
       #ffffff 0,
-      #cfc6e6 calc(var(--night-fade-in) * 0.3),
-      #4c4b8f calc(var(--night-fade-in) * 0.65),
-      #0c0f3a calc(var(--night-fade-in) - 24px),
+      #faf8fc calc(var(--dusk-h) * 0.083),
+      #ece8f5 calc(var(--dusk-h) * 0.167),
+      #dad3ec calc(var(--dusk-h) * 0.25),
+      #c6bde1 calc(var(--dusk-h) * 0.333),
+      #a89fcf calc(var(--dusk-h) * 0.417),
+      #837db8 calc(var(--dusk-h) * 0.5),
+      #605ea0 calc(var(--dusk-h) * 0.583),
+      #48478b calc(var(--dusk-h) * 0.667),
+      #343576 calc(var(--dusk-h) * 0.75),
+      #222460 calc(var(--dusk-h) * 0.833),
+      #15184f calc(var(--dusk-h) * 0.917),
+      #101348 var(--dusk-h),
       #101348 35%,
       #201a50 70%,
-      #2e1f52 calc(100% - var(--night-fade-out)),
-      #7d73a8 calc(100% - var(--night-fade-out) * 0.55),
-      #ddd3ea calc(100% - var(--night-fade-out) * 0.2),
+      /* 夜明け: 色の変化量をイーズインアウトで刻み、始点と終点で勾配が折れて線に見えないようにする */
+      #2e1f52 calc(100% - var(--dawn-h)),
+      #36275a calc(100% - var(--dawn-h) * 0.875),
+      #493c70 calc(100% - var(--dawn-h) * 0.75),
+      #665a8e calc(100% - var(--dawn-h) * 0.625),
+      #8b81b1 calc(100% - var(--dawn-h) * 0.5),
+      #bdb3d4 calc(100% - var(--dawn-h) * 0.375),
+      #e4ddef calc(100% - var(--dawn-h) * 0.25),
+      #f8f6fa calc(100% - var(--dawn-h) * 0.125),
       #ffffff 100%
     );
   }
@@ -830,6 +880,106 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     }
   }
 
+  /* 草の影。stickyで夜の間は画面下に留まり、夜に入る時は下からせり上がる。
+     スクロール連動が使えない環境では、夜明けのフェード区間でマスクして消す */
+  .grass-frame {
+    --grass-mask: linear-gradient(
+      to bottom,
+      transparent calc(var(--night-fade-in) * 0.5),
+      #000 var(--night-fade-in),
+      #000 calc(100% - var(--night-fade-out) * 0.35),
+      transparent 100%
+    );
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mask-image: var(--grass-mask);
+  }
+
+  /* 位置基準のマスクだと根元から先に消えて穂先が宙に浮くため、草全体をフェードさせる。
+     夜明けの間は明けていく空に逆光のシルエットとして残し、夜の背景の下端(ここで草が
+     切り落とされる)に着く直前で消す */
+  @supports (animation-timeline: view()) {
+    .roots-night {
+      view-timeline: --roots;
+    }
+
+    .grass-frame {
+      mask-image: none;
+    }
+
+    .grass-sticky {
+      animation: grass-fade linear both;
+      animation-timeline: --roots;
+      animation-range: cover var(--night-fade-in) exit 0%;
+    }
+  }
+
+  @keyframes grass-fade {
+    0% {
+      opacity: 0;
+    }
+
+    18%,
+    90% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .grass-sticky {
+    --grass-h: min(74vh, 720px);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  /* 根元は画面下に見切れさせ、草の上側だけが覗き込むように見せる。
+     沈めた分の見え幅を保つため、草自体は少し大きめにする。左右は画面外へ少しはみ出させ、
+     奥の株ほど薄くして夜の空気に溶かす */
+  .grass {
+    --h: calc(var(--grass-h) * var(--scale));
+    position: absolute;
+    bottom: calc(var(--h) * -0.24);
+    height: var(--h);
+    aspect-ratio: var(--grass-ratio);
+    background: #05061c;
+    opacity: var(--shade);
+    mask: var(--grass) bottom / 100% 100% no-repeat;
+    transform-origin: 50% 100%;
+    transform: rotate(var(--tilt)) scaleX(var(--flip-x, 1));
+  }
+
+  .grass.flip {
+    --flip-x: -1;
+  }
+
+  /* 夜明けのベール。.night-band の夜明け区間と同じ色・位置のグラデーションに透明度を持たせて
+     草の上へ重ねる。背景だけの所は同色が重なるので変わらず、草だけが明けていく空に覆われて消える */
+  .dawn-veil {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--dawn-h);
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgb(46 31 82 / 0) 0,
+      rgb(54 39 90 / 0.09) 12.5%,
+      rgb(73 60 112 / 0.25) 25%,
+      rgb(102 90 142 / 0.42) 37.5%,
+      rgb(139 129 177 / 0.59) 50%,
+      rgb(189 179 212 / 0.75) 62.5%,
+      rgb(228 221 239 / 0.88) 75%,
+      rgb(248 246 250 / 0.97) 87.5%,
+      #ffffff 100%
+    );
+  }
+
   .fireflies {
     position: absolute;
     inset: 0;
@@ -964,8 +1114,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     }
 
     .forest-layer,
-    .mist {
+    .mist,
+    .grass-sticky {
       animation: none !important;
+    }
+
+    /* スクロール連動のフェードを止めるため、位置基準のマスクに戻す */
+    .grass-frame {
+      mask-image: var(--grass-mask) !important;
     }
 
     .firefly {
@@ -1067,6 +1223,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     .night-band {
       inset: 0 -24px;
+    }
+
+    .grass-sticky {
+      --grass-h: min(46vh, 380px);
     }
 
     .detail-list {
