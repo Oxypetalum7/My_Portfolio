@@ -6,6 +6,8 @@ import heroBand from "../assets/biography/hero-band.jpg";
 // 草の影(白固定)。grass_1が右端用、grass_2が左端用。CSSマスクの型として使い、色は外から塗る
 import grassRight from "../assets/biography/grass/grass_1.svg";
 import grassLeft from "../assets/biography/grass/grass_2.svg";
+// 左上から垂れるリュウゼツランの花(自分で撮った写真の切り抜き)。草と同じく透過部分をマスクの型にする
+import agave from "../assets/biography/agave/ryuzetsuran.png";
 
 // Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける。
 // 月が昇り沈む縦の通り道(x = MOON_LANE_X 付近)は、どの層も木を置かずに空けておく。
@@ -498,9 +500,20 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           ))
         }
       </div>
-      <!-- 夜の間だけ画面の左右下に草の影を貼り付け、物陰から夜の森を覗き込む構図にする -->
+      <!-- 夜の間だけ画面の四隅を軽く暗く落とし、夜景を覗き込むような周辺減光をかける -->
+      <div class="vignette-frame">
+        <div class="vignette"></div>
+      </div>
+      <!-- 夜の間だけ画面の左右下に草の影、左上に垂れ下がるリュウゼツランの花を貼り付け、
+           物陰から夜の森を覗き込む構図にする -->
       <div class="grass-frame">
         <div class="grass-sticky">
+          <div class="agave-blur">
+            <div
+              class="agave"
+              style={`--agave: url(${agave.src}); --agave-ratio: ${agave.width} / ${agave.height}`}
+            />
+          </div>
           {
             grassClumps.map((g) => (
               <div
@@ -511,6 +524,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           }
         </div>
       </div>
+      <!-- 夕闇のグラデーションを花の上にも重ね、花が白からの遷移の下から現れるように見せる -->
+      <div class="dusk-veil"></div>
       <!-- 夜明けのグラデーションを草の上にも重ね、草が白への遷移の下に沈んでいくように見せる -->
       <div class="dawn-veil"></div>
     </div>
@@ -1037,6 +1052,32 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     }
   }
 
+  /* 周辺減光。stickyで画面に留め、夜の背景の上でだけ見えるよう夕闇・夜明けの区間はマスクで消す */
+  .vignette-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.5),
+      #000 calc(var(--dusk-h) + 40px),
+      #000 calc(100% - var(--dawn-h) - 40px),
+      transparent calc(100% - var(--dawn-h) * 0.4)
+    );
+  }
+
+  .vignette {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: radial-gradient(
+      ellipse 75% 70% at 50% 45%,
+      transparent 45%,
+      rgb(3 4 20 / 0.24) 70%,
+      rgb(3 4 20 / 0.52) 100%
+    );
+  }
+
   /* 草の影。stickyで夜の間は画面下に留まり、夜に入る時は下からせり上がる。
      スクロール連動が使えない環境では、夜明けのフェード区間でマスクして消す */
   .grass-frame {
@@ -1112,6 +1153,55 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
   .grass.flip {
     --flip-x: -1;
+  }
+
+  /* 左上の角から垂れ下がる花。付け根側は画面の外へ少し逃がし、枝先だけが垂れて見えるようにする。
+     色は草の影と同じにして、夜空に溶け込む控えめな主張にそろえる。
+     手前でピントの外れた枝に見えるよう軽くぼかす(マスクより後に掛けるため、外側の要素のfilterで付ける) */
+  .agave-blur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    filter: blur(2px);
+  }
+
+  .agave {
+    --agave-h: min(32vh, 300px);
+    position: absolute;
+    top: calc(var(--agave-h) * -0.06);
+    left: calc(var(--agave-h) * -0.08);
+    height: var(--agave-h);
+    aspect-ratio: var(--agave-ratio);
+    background: #05061c;
+    opacity: 0.8;
+    mask: var(--agave) top left / 100% 100% no-repeat;
+  }
+
+  /* 夕闇のベール。.night-band の夕闇区間と同じ色・位置のグラデーションに、上ほど不透明になる
+     透明度を持たせて花の上へ重ねる。背景だけの所は変わらず、花だけが白からの遷移に沈んで見える */
+  .dusk-veil {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--dusk-h);
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 1) 0%,
+      rgb(250 248 252 / 0.98) 8.3%,
+      rgb(236 232 245 / 0.93) 16.7%,
+      rgb(218 211 236 / 0.84) 25%,
+      rgb(198 189 225 / 0.74) 33.3%,
+      rgb(168 159 207 / 0.62) 41.7%,
+      rgb(131 125 184 / 0.5) 50%,
+      rgb(96 94 160 / 0.38) 58.3%,
+      rgb(72 71 139 / 0.26) 66.7%,
+      rgb(52 53 118 / 0.16) 75%,
+      rgb(34 36 96 / 0.07) 83.3%,
+      rgb(21 24 79 / 0.02) 91.7%,
+      rgb(16 19 72 / 0) 100%
+    );
   }
 
   /* 夜明けのベール。.night-band の夜明け区間と同じ色・位置のグラデーションに透明度を持たせて
@@ -1384,6 +1474,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     .grass-sticky {
       --grass-h: min(46vh, 380px);
+    }
+
+    .agave {
+      --agave-h: min(22vh, 180px);
     }
 
     .detail-list {
