@@ -204,6 +204,30 @@ const grassClumps = [
   { side: "right", asset: grassRight, scale: 1, x: -0.14, flip: false, shade: 0.92 },
 ] as const;
 
+// RootsとNowの間の破れ口。表の紙(白)の下端をギザギザに破り、そのすぐ下に一段白っぽい
+// 紙の芯(繊維の帯)を覗かせる。大きなうねり＋細かな欠けを重ね、等倍で描く(横に伸ばさない)
+const TEAR_W = 2400;
+const TEAR_H = 96;
+const tearEdge = Array.from({ length: Math.ceil(TEAR_W / 7) + 1 }, (_, i) => {
+  const x = Math.min(i * 7, TEAR_W);
+  const wave =
+    Math.sin(x / 210 + hash(1, 2) * 6) * 9 + Math.sin(x / 83 + hash(3, 4) * 6) * 5 + Math.sin(x / 37 + hash(5, 6) * 6) * 2.5;
+  const chip = (hash(i, 7) - 0.5) * 5 + (hash(i, 8) < 0.06 ? 6 : 0);
+  const face = 38 + wave + chip;
+  const core = face + 3 + hash(i, 9) * 6;
+  return { x, face, core };
+});
+const tearPath = (key: "face" | "core") =>
+  `M0 0 H${TEAR_W} ` +
+  tearEdge
+    .slice()
+    .reverse()
+    .map((p) => `L${p.x} ${p[key].toFixed(1)}`)
+    .join(" ") +
+  " Z";
+const tearFacePath = tearPath("face");
+const tearCorePath = tearPath("core");
+
 // 蛍火(青紫の光の粒)
 const fireflies = Array.from({ length: 28 }, (_, i) => {
   const rand = (n: number) => hash(i, n);
@@ -731,7 +755,20 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     </div>
   </div>
 
-  <div class="section">
+  <div class="section now-paper">
+    <!-- Rootsまでの紙(上の紙)をここで破り、下に重なっていた温かみのある紙にNowを書く -->
+    <div class="under-paper" aria-hidden="true"></div>
+    <svg class="paper-tear" viewBox={`0 0 ${TEAR_W} ${TEAR_H}`} preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+      <defs>
+        <!-- 破れ口の繊維: 細かく縦に揺らして、紙の芯の毛羽立ちを出す -->
+        <filter id="tear-fibers" x="0" y="-10%" width="100%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.09 0.6" numOctaves="2" seed="8" result="fiber" />
+          <feDisplacementMap in="SourceGraphic" in2="fiber" scale="5" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+      <path class="tear-core" d={tearCorePath} filter="url(#tear-fibers)" />
+      <path class="tear-face" d={tearFacePath} />
+    </svg>
     <h2 class="h-section">Now <span class="ruby">いま、はまっていること</span></h2>
     <div class="indent">
       <h3 class="h-item">FINAL FANTASY XIV</h3>
@@ -1448,6 +1485,56 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     opacity: 0.55;
   }
 
+  /* Now: 破れた表の紙の下から覗く、温かみのある下の紙 */
+  .now-paper {
+    --paper-bleed: 64px;
+    --paper-bleed-bottom: 64px;
+    --tear-overlap: 28px;
+    margin-top: 24px;
+    padding: calc(var(--tear-overlap) + 40px) 0 16px;
+    color: #4a3b2e;
+  }
+
+  .now-paper .ruby {
+    color: #a08568;
+  }
+
+  /* 左右と下はページの余白まで敷き詰め、上端は破れ口の裏(ギザギザの一番高い所より上)まで差し込む */
+  .under-paper {
+    position: absolute;
+    top: 16px;
+    left: calc(var(--paper-bleed) * -1);
+    right: calc(var(--paper-bleed) * -1);
+    bottom: calc(var(--paper-bleed-bottom) * -1);
+    z-index: -1;
+    background-color: #f8f1e4;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='12' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.3 0 0 0 0 0.18 1.4 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.06' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.36 0 0 0 0 0.2 1.2 0 0 0 -0.5'/%3E%3C/filter%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='3' seed='31' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0 0.24 0.4 0 0 0 -0.17'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='0.1'/%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 90% 70% at 50% 35%, transparent 60%, rgb(150 110 70 / 0.05) 100%);
+  }
+
+  /* 破れ口。表の紙の下端と、その下に覗く紙の芯。下の紙へ落ちる影で、紙が一枚重なっている厚みを出す */
+  .paper-tear {
+    position: absolute;
+    top: 0;
+    left: calc(var(--paper-bleed) * -1);
+    width: calc(100% + var(--paper-bleed) * 2);
+    max-width: none;
+    height: 96px;
+    pointer-events: none;
+    /* 上端は表の紙とページの白が地続きなので、影が線にならないよう上端だけ溶かす */
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+    filter: drop-shadow(0 2px 2px rgb(92 64 36 / 0.28)) drop-shadow(0 6px 10px rgb(92 64 36 / 0.16));
+  }
+
+  .tear-face {
+    fill: #ffffff;
+  }
+
+  .tear-core {
+    fill: #faf6ee;
+  }
+
   /* 夕闇のベール。.night-band の夕闇区間と同じ色・位置のグラデーションに、上ほど不透明になる
      透明度を持たせて花の上へ重ねる。背景だけの所は変わらず、花だけが白からの遷移に沈んで見える */
   .dusk-veil {
@@ -1758,6 +1845,11 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     .grass-sticky {
       --grass-h: min(46vh, 380px);
+    }
+
+    .now-paper {
+      --paper-bleed: 24px;
+      --paper-bleed-bottom: 32px;
     }
 
     .agave,
