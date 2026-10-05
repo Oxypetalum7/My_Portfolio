@@ -8,6 +8,8 @@ import grassRight from "../assets/biography/grass/grass_1.svg";
 import grassLeft from "../assets/biography/grass/grass_2.svg";
 // 左上から垂れるリュウゼツランの花(自分で撮った写真の切り抜き)。草と同じく透過部分をマスクの型にする
 import agave from "../assets/biography/agave/ryuzetsuran.png";
+// 森の下草(白固定の芝のアセット)。文字列で読み込み、<symbol>に変換して森の各層に生やす
+import forestGrassRaw from "../assets/biography/grass/grass_3.svg?raw";
 
 // Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける。
 // 月が昇り沈む縦の通り道(x = MOON_LANE_X 付近)は、どの層も木を置かずに空けておく。
@@ -74,6 +76,50 @@ const leafSymbols = Object.keys(leafFiles)
       .replaceAll(/href="#([^"]+)"/g, `href="#${id}-$1"`);
     return { id, viewBox: `0 0 ${width} ${height}`, inner };
   });
+
+// 森の下草(白固定の芝のアセット)。葉と同じく白のfillを外し、外からグラデーションで塗る
+const forestGrass = {
+  viewBox: forestGrassRaw.match(/viewBox="([^"]+)"/)![1],
+  inner: forestGrassRaw
+    .replace(/^[\s\S]*?<svg[^>]*>/, "")
+    .replace(/<\/svg>\s*$/, "")
+    .replaceAll('fill="white"', ""),
+};
+const [, , GRASS_W, GRASS_H] = forestGrass.viewBox.split(" ").map(Number);
+
+// 下草の株。各木の根元に3〜5株を寄せて茂らせ、木と木の間にも株を散らす。
+// 月の通り道には生やさない(縦に流れて月の前を横切るため)。下端が地面の線になるよう配置する
+type Tuft = { x: number; y: number; w: number; flip: boolean };
+const LANE_HALF = 75;
+// 木の間の株のうち、木の葉の上に生えて浮いて見えたものは個別にむしる(「層-番号」で指定)
+const PLUCKED_TUFTS = new Set(["far-2", "mid-4"]);
+const forestTufts = forestLayers.map((layer, li) => {
+  const tufts: Tuft[] = [];
+  const add = (x: number, y: number, w: number, seed: number) => {
+    if (Math.abs(x - MOON_LANE_X) < LANE_HALF + w / 2) return;
+    tufts.push({ x, y, w, flip: hash(seed, 9) < 0.5 });
+  };
+  layer.trees.forEach((t, ti) => {
+    const ground = t.y + 62 * t.s;
+    [-0.55, -0.25, 0, 0.28, 0.55].forEach((o, k) => {
+      const seed = li * 100 + ti * 10 + k;
+      if (k !== 2 && hash(seed, 1) < 0.3) return;
+      const w = 100 * t.s * (0.55 + hash(seed, 2) * 0.35);
+      add(t.x + o * 100 * t.s + (hash(seed, 3) - 0.5) * 12 * t.s, ground + (hash(seed, 4) - 0.5) * 8 * t.s, w, seed);
+    });
+  });
+  // 木の間の株。層の木の大きさを基準に、層の縦の範囲へ散らす
+  const s = layer.trees[0].s;
+  const ys = layer.trees.map((t) => t.y + 62 * t.s);
+  const [top, bottom] = [Math.min(...ys) - 40 * s, Math.max(...ys) + 20 * s];
+  for (let i = 0; i < 5; i++) {
+    if (PLUCKED_TUFTS.has(`${layer.depth}-${i}`)) continue;
+    const seed = li * 1000 + i;
+    add(20 + hash(seed, 5) * 560, top + hash(seed, 6) * (bottom - top), 100 * s * (0.4 + hash(seed, 7) * 0.3), seed);
+  }
+  // 奥(上)の株から描き、手前(下)の株を重ねる
+  return tufts.sort((a, b) => a.y - b.y);
+});
 
 // 木は「葉の塊(clump)」を円錐状の範囲にばらばらに散らして描く。段を規則的に積むと
 // 渦巻き状に見えるため、塊の位置・大きさ・色味・木の傾きをvariantごとに不揃いにする。
@@ -380,6 +426,13 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
             />
             <feGaussianBlur stdDeviation="3" />
           </filter>
+          <!-- 下草: くすんだ緑の葉先から、根元は夜の紫へ沈める -->
+          <linearGradient id="forest-grass-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#c3cf86" />
+            <stop offset="0.5" stop-color="#7f8c55" />
+            <stop offset="1" stop-color="#4a3263" />
+          </linearGradient>
+          <symbol id="forest-grass" viewBox={forestGrass.viewBox} set:html={forestGrass.inner} />
           {
             leafSymbols.map((leaf) => (
               <symbol id={leaf.id} viewBox={leaf.viewBox} set:html={leaf.inner} />
@@ -456,7 +509,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       </div>
       <div class="forest">
         {
-          forestLayers.map((layer) => (
+          forestLayers.map((layer, li) => (
             <>
             <svg
               class:list={["forest-layer", `forest-${layer.depth}`]}
@@ -473,6 +526,21 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
                     height={140 * t.s}
                   />
                 ))}
+                <g fill="url(#forest-grass-fill)" opacity="0.7">
+                  {forestTufts[li].map((g) => {
+                    const h = (g.w * GRASS_H) / GRASS_W;
+                    return (
+                      <use
+                        href="#forest-grass"
+                        x={g.x - g.w / 2}
+                        y={g.y - h}
+                        width={g.w}
+                        height={h}
+                        transform={g.flip ? `translate(${g.x * 2} 0) scale(-1 1)` : undefined}
+                      />
+                    );
+                  })}
+                </g>
               </g>
             </svg>
             {/* 奥と中・中と手前の間に靄を挟み、奥の木ほど空気に霞ませる */}
