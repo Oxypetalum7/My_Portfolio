@@ -22,6 +22,11 @@ import mistMid from "../assets/biography/roots/mist-mid.webp";
 import skyMottle from "../assets/biography/roots/sky-mottle.webp";
 import skyNebula from "../assets/biography/roots/sky-nebula.webp";
 
+// ポラロイドの写真(元は1600px幅)。表示はデスクトップで最大 338px×1.25倍、モバイルで170px程度なので、
+// 画面に合う幅のWebPを配る
+const POLAROID_WIDTHS = [400, 800, 1200];
+const POLAROID_SIZES = "(max-width: 700px) 170px, 423px";
+
 const rootsArt = {
   "forest-far": forestFar,
   "forest-mid": forestMid,
@@ -91,7 +96,13 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 >
   <div class="section">
     <div class="hero-band" aria-hidden="true">
-      <img src={heroBand.src} alt="" />
+      <Image
+        src={heroBand}
+        widths={[600, 1024]}
+        sizes="(max-width: 700px) 590px, max(1046px, calc(63vw + 150px))"
+        loading="eager"
+        alt=""
+      />
       <div class="hero-band-fade"></div>
     </div>
     <h2 class="h-section">Profile <span class="ruby">プロフィール</span></h2>
@@ -131,13 +142,13 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     <h2 class="h-section">Hobbies <span class="ruby">これだけは譲れない、趣味</span></h2>
     <div class="photo-collage" aria-hidden="true">
       <figure class="polaroid p1" data-throw-in>
-        <img src={photoSynth.src} alt="ハードウェアシンセサイザー" loading="lazy" />
+        <Image src={photoSynth} widths={POLAROID_WIDTHS} sizes={POLAROID_SIZES} alt="ハードウェアシンセサイザー" />
       </figure>
       <figure class="polaroid p2" data-throw-in>
-        <img src={photoNature.src} alt="自然の写真" loading="lazy" />
+        <Image src={photoNature} widths={POLAROID_WIDTHS} sizes={POLAROID_SIZES} alt="自然の写真" />
       </figure>
       <figure class="polaroid p3" data-throw-in>
-        <img src={photoCamera.src} alt="Canon EOS 70D" loading="lazy" />
+        <Image src={photoCamera} widths={POLAROID_WIDTHS} sizes={POLAROID_SIZES} alt="Canon EOS 70D" />
       </figure>
     </div>
     <div class="indent">
@@ -446,6 +457,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     top: calc(234px - var(--hero-w) * 0.285);
     width: var(--hero-w);
     max-width: none;
+    height: auto;
     object-fit: cover;
   }
 
