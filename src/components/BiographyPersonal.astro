@@ -8,6 +8,8 @@ import grassRight from "../assets/biography/grass/grass_1.svg";
 import grassLeft from "../assets/biography/grass/grass_2.svg";
 // 左上から垂れるリュウゼツランの花(自分で撮った写真の切り抜き)。草と同じく透過部分をマスクの型にする
 import agave from "../assets/biography/agave/ryuzetsuran.png";
+// Nowのノートの右下に押すスタンプ(るぺたん)
+import lupetanStamp from "../assets/biography/stamp/lupetan-stamp.png";
 // 森の下草(白固定の芝のアセット)。文字列で読み込み、<symbol>に変換して森の各層に生やす
 import forestGrassRaw from "../assets/biography/grass/grass_3.svg?raw";
 
@@ -816,6 +818,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
         <p>肌に乗せた時の匂いや、季節なんかを気にしながら集めるのが楽しくなってきました。</p>
       </div>
     </div>
+    <!-- ノートの右下に、少し傾けてポンと押したスタンプ -->
+    <img class="now-stamp" data-stamp src={lupetanStamp.src} width="512" height="512" alt="" loading="lazy" decoding="async" />
   </div>
 </section>
 
@@ -1506,6 +1510,54 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     font-family: "Tetsubin Gothic", var(--font-jp);
   }
 
+  /* スタンプ。インクが紙に染みたように乗算で重ね、ノイズのマスクでインクのかすれ・ムラを出す */
+  .now-stamp {
+    position: absolute;
+    right: max(0px, 6%);
+    bottom: 24px;
+    width: clamp(168px, 17vw, 264px);
+    height: auto;
+    rotate: 12deg;
+    opacity: 0.88;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.6 2.15'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.4 1.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mask-size: 180px;
+  }
+
+  /* 画面に入ったら、上から押し付けるように一度だけポンと押す */
+  .now-stamp[data-stamp] {
+    opacity: 0;
+  }
+
+  .now-stamp.stamped {
+    animation: stamp-press 0.55s cubic-bezier(0.3, 0.8, 0.4, 1) forwards;
+  }
+
+  @keyframes stamp-press {
+    0% {
+      opacity: 0;
+      scale: 1.45;
+      rotate: 4deg;
+    }
+
+    55% {
+      opacity: 0.88;
+      scale: 0.95;
+      rotate: 12deg;
+    }
+
+    78% {
+      scale: 1.02;
+    }
+
+    100% {
+      opacity: 0.88;
+      scale: 1;
+      rotate: 12deg;
+    }
+  }
+
   /* 鉄瓶ゴシックは書体自体が極太なので、見出しの太字指定は外す */
   .now-paper .h-section,
   .now-paper .h-item,
@@ -1756,6 +1808,11 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       animation: none !important;
     }
 
+    .now-stamp[data-stamp] {
+      opacity: 0.88;
+      animation: none !important;
+    }
+
     .forest-layer,
     .mist,
     .grass-sticky,
@@ -1885,9 +1942,18 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       --grass-h: min(46vh, 380px);
     }
 
+    /* 罫線が全幅になるので、本文の下に罫線のない余白を作り、スタンプはそこへ押す */
     .now-paper {
       --paper-bleed: 24px;
       --paper-bleed-bottom: 32px;
+      --stamp-size: 156px;
+      padding-bottom: calc(var(--stamp-size) + 24px);
+    }
+
+    .now-stamp {
+      right: 8%;
+      bottom: 4px;
+      width: var(--stamp-size);
     }
 
     .agave,
@@ -2045,6 +2111,31 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   document.addEventListener("astro:page-load", () => {
     const collage = document.querySelector(".photo-collage");
     if (collage) arm(collage);
+  });
+
+  // Nowのスタンプは、ほぼ全体が画面に入ったところで一度だけ押す
+  let stampObserver: IntersectionObserver | null = null;
+
+  function armStamp() {
+    stampObserver?.disconnect();
+    const stamp = document.querySelector(".now-stamp");
+    if (!stamp) return;
+    stamp.classList.remove("stamped");
+    stampObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          stamp.classList.add("stamped");
+          stampObserver?.disconnect();
+        }
+      },
+      { threshold: 0.8 },
+    );
+    stampObserver.observe(stamp);
+  }
+
+  document.addEventListener("astro:page-load", armStamp);
+  document.addEventListener("biography:sidechange", (event) => {
+    if ((event as CustomEvent).detail?.side !== "personal") armStamp();
   });
 
   // Professional側へ切り替わったらリセットし、次にPersonalへ戻った時も
