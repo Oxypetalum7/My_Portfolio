@@ -686,6 +686,9 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           }
         </div>
       </div>
+      <!-- 夜景全体をわずかに色褪せさせ、細かなざらつきを載せて、レトロなタイトル画面のような質感にする -->
+      <div class="retro-fade"></div>
+      <div class="retro-grain"></div>
       <!-- 夕闇のグラデーションを花の上にも重ね、花が白からの遷移の下から現れるように見せる -->
       <div class="dusk-veil"></div>
       <!-- 夜明けのグラデーションを草の上にも重ね、草が白への遷移の下に沈んでいくように見せる -->
@@ -1412,6 +1415,35 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     background: #05061c;
     opacity: 0.8;
     mask: var(--agave) top left / 100% 100% no-repeat;
+  }
+
+  /* レトロな質感。夜の区間にだけ掛け、夕闇・夜明けのグラデーションは澄んだまま残す */
+  .retro-fade,
+  .retro-grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--dusk-h) * 0.5),
+      #000 calc(var(--dusk-h) + 80px),
+      #000 calc(100% - var(--dawn-h) - 60px),
+      transparent calc(100% - var(--dawn-h) * 0.4)
+    );
+  }
+
+  /* 黒を少し持ち上げ、褪せたくすみ色に寄せる(暗部ほど効き、月や灯りの明部はほぼそのまま) */
+  .retro-fade {
+    background: rgb(30 25 46);
+    mix-blend-mode: lighten;
+    opacity: 0.55;
+  }
+
+  /* 細かなざらつき。継ぎ目なく敷き詰められるノイズのタイルを、中間の灰色を基準にオーバーレイで重ねる */
+  .retro-grain {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+    opacity: 0.55;
   }
 
   /* 夕闇のベール。.night-band の夕闇区間と同じ色・位置のグラデーションに、上ほど不透明になる
