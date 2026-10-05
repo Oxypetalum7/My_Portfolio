@@ -820,6 +820,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 </section>
 
 <style>
+  /* 鉄瓶ゴシック(Apache License 2.0、源ノ角ゴシックの派生)。Nowで使う文字だけに絞ったwoff2を
+     scripts/subset-tetsubin.py で生成している。Nowの文章を書き換えたら作り直す */
+  @font-face {
+    font-family: "Tetsubin Gothic";
+    src: url("../assets/fonts/tetsubin-gothic/tetsubin-gothic-now.woff2") format("woff2");
+    font-display: swap;
+  }
+
   .bio-personal {
     display: flex;
     flex-direction: column;
@@ -1494,6 +1502,22 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     margin-top: calc((var(--tear-h) + 32px) * -1);
     padding: calc(var(--tear-h) + 24px) 0 16px;
     color: #4a3b2e;
+    /* 紙が変わったら字も変わる: ノートに太いペンで書き込んだような鉄瓶ゴシックにする */
+    font-family: "Tetsubin Gothic", var(--font-jp);
+  }
+
+  /* 鉄瓶ゴシックは書体自体が極太なので、見出しの太字指定は外す */
+  .now-paper .h-section,
+  .now-paper .h-item,
+  .now-paper .ruby {
+    font-weight: normal;
+  }
+
+  /* 本文は極太の書体をわずかに軽く見せる。紙の色の縁取りを文字の上に重ねて輪郭をごく薄く削り、
+     色も見出しより一段明るい茶色にする(縁取りは線の中心に掛かるので、太さの半分だけ細くなる) */
+  .now-paper .desc-block {
+    color: #66513f;
+    -webkit-text-stroke: 0.2px #f8f1e4;
   }
 
   .now-paper .ruby {
