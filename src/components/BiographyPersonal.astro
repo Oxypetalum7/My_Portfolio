@@ -5,9 +5,10 @@ import photoSynth from "../assets/biography/photo-synth.jpg";
 import photoNature from "../assets/biography/photo-nature.jpg";
 import photoCamera from "../assets/biography/photo-camera.jpg";
 import heroBand from "../assets/biography/hero-band.jpg";
-// 草の影(白固定)。grass_1が右端用、grass_2が左端用。CSSマスクの型として使い、色は外から塗る
-import grassRight from "../assets/biography/grass/grass_1.svg";
-import grassLeft from "../assets/biography/grass/grass_2.svg";
+// 草の影(白固定)。grass_1が右端用、grass_2が左端用。CSSマスクの型として使い、色は外から塗る。
+// 原画はSVGだが、マスクに使うとGPUの描画が重いため scripts/render-grass-masks.mjs で焼き付けたWebPを使う
+import grassRight from "../assets/biography/grass/grass_1.webp";
+import grassLeft from "../assets/biography/grass/grass_2.webp";
 // 左上から垂れるリュウゼツランの花(自分で撮った写真の切り抜き)。草と同じく透過部分をマスクの型にする
 import agave from "../assets/biography/agave/ryuzetsuran.png";
 // Nowのノートの右下に押すスタンプ(るぺたん)
