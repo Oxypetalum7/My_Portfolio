@@ -63,6 +63,7 @@ npm install
 npm run dev      # 開発サーバー (localhost:4321)
 npm run build    # 本番ビルド (./dist/)
 npm run preview  # ビルドのプレビュー
+npm run check    # 型チェック → ビルド → CSPの取りこぼしチェック(push前に)
 ```
 
 ## License
