@@ -10,8 +10,8 @@ import forestGrassRaw from "../assets/biography/grass/grass_3.svg?raw";
 // Roots背景の森。viewBox(600×1300)上の配置で、奥(上・小・暗)→手前(下・大・明)の3層に分ける。
 // 月が昇り沈む縦の通り道(x = MOON_LANE_X 付近)は、どの層も木を置かずに空けておく。
 // 層は縦にしか流れないので、ここを空ければスクロール中も木が月の前を横切らない
-type Tree = { x: number; y: number; s: number };
-const forestLayers: { depth: "far" | "mid" | "near"; trees: Tree[] }[] = [
+type TreePlacement = { x: number; y: number; s: number };
+const forestLayers: { depth: "far" | "mid" | "near"; trees: TreePlacement[] }[] = [
   {
     depth: "far",
     trees: [
@@ -115,7 +115,7 @@ const forestTufts = forestLayers.map((layer, li) => {
 // 各塊は「影の土台 → 色の明部 → 月明かりの点」の3層
 type Ellipse = { cx: number; cy: number; rx: number; ry: number };
 type Clump = { base: Ellipse; light: Ellipse; tone: number; olive?: Ellipse; highlights: Ellipse[] };
-type Tree = { mass: Ellipse[]; clumps: Clump[] };
+type TreeShape = { mass: Ellipse[]; clumps: Clump[] };
 const CLUMP_COUNT = 96;
 // 明部の色味(0=琥珀・1=赤橙・2=淡いクリーム・3=くすんだ緑)の出現率。クリームは差し色程度に抑える
 const pickTone = (x: number) => (x < 0.4 ? 0 : x < 0.63 ? 1 : x < 0.72 ? 2 : 3);
@@ -137,7 +137,7 @@ const leafStamp = (e: Ellipse) => {
   };
 };
 
-const treeVariants = [0, 1, 2].map((v): Tree => {
+const treeVariants = [0, 1, 2].map((v): TreeShape => {
   const lean = (hash(v, 1) - 0.5) * 14;
   const clumps: Clump[] = [];
   for (let i = 0; i < CLUMP_COUNT; i++) {

@@ -1,11 +1,14 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Splash from "../components/Splash.astro";
-import updates from "../data/updates.json";
+import updatesJson from "../data/updates.json";
 import announcements from "../data/announcements.json";
 import iconDefaultRaw from "../assets/brand/gekkabijin-default.svg?raw";
 import iconBezierRaw from "../assets/brand/gekkabijin-bezier.svg?raw";
 import iconMoonRaw from "../assets/brand/gekkabijin-moon.svg?raw";
+
+// 空の配列([])だとJSONの型が never[] に推論されるので、要素の形を明示する
+const updates: { date: string; text: string }[] = updatesJson;
 ---
 
 <BaseLayout title="Oxypetalum7’s portfolio">
