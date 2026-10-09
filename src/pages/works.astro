@@ -1,10 +1,32 @@
 ---
+import { Image, getImage } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CategoryTip from "../components/CategoryTip.astro";
-import { worksGroups, workCategoryColors } from "../data/works";
+import { worksGroups, workCategoryColors, type WorkImage } from "../data/works";
 import iconComment from "../assets/works/icon-comment.svg";
 import iconLink from "../assets/works/icon-link.svg";
 import iconPlay from "../assets/works/icon-play.svg";
+
+const DEFAULT_MEDIA_WIDTH = 468;
+
+/** 表示幅の1x・2x(元画像より大きくはしない)。PNGのまま配ると1枚で数百KB〜1MBになるため */
+function mediaWidths(img: WorkImage): number[] {
+  const w = img.width ?? DEFAULT_MEDIA_WIDTH;
+  return [...new Set([w, w * 2].map((x) => Math.min(x, img.image.width)))];
+}
+
+// 動画のポスターは<video>の属性なので<Image>が使えない。先に変換しておく
+const posters = new Map(
+  await Promise.all(
+    worksGroups
+      .flatMap((g) => g.works.flatMap((w) => w.images))
+      .filter((img) => img.video)
+      .map(async (img) => {
+        const poster = await getImage({ src: img.image, width: mediaWidths(img).at(-1), format: "webp" });
+        return [img, poster.src] as const;
+      }),
+  ),
+);
 
 function escapeHtml(text: string): string {
   return text
@@ -69,13 +91,13 @@ function renderText(text: string): string {
                           { plain: img.plain },
                           img.glow && `glow-${img.glow}`,
                         ]}
-                        style={`width: min(${img.width ?? 468}px, 100%)`}
+                        style={`width: min(${img.width ?? DEFAULT_MEDIA_WIDTH}px, 100%)`}
                       >
                         {img.video ? (
                           <>
                             <video
                               src={img.video}
-                              poster={img.image.src}
+                              poster={posters.get(img)}
                               preload="metadata"
                               playsinline
                               aria-label={img.alt}
@@ -86,7 +108,28 @@ function renderText(text: string): string {
                           </>
                         ) : (
                           <>
-                            <img src={img.image.src} alt={img.alt} loading="lazy" />
+                            {img.animated ? (
+                              // アニメーションWebPは<Image>を通すと1コマ目だけの静止画になるので、そのまま出す
+                              <img
+                                class="media-img"
+                                src={img.image.src}
+                                width={img.image.width}
+                                height={img.image.height}
+                                alt={img.alt}
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <Image
+                                class="media-img"
+                                src={img.image}
+                                width={mediaWidths(img).at(-1)}
+                                widths={mediaWidths(img)}
+                                sizes={`min(${img.width ?? DEFAULT_MEDIA_WIDTH}px, 100vw)`}
+                                format="webp"
+                                alt={img.alt}
+                              />
+                            )}
                             {img.playOverlay && (
                               <img class="play-overlay" src={iconPlay.src} alt="" />
                             )}
@@ -365,6 +408,11 @@ function renderText(text: string): string {
     display: block;
     width: 100%;
     border-radius: 16px;
+  }
+
+  /* width・height属性(読み込み前の場所取り用)があるので、比率は保ったまま幅に合わせる */
+  .media-img {
+    height: auto;
   }
 
   /* 透過画像は矩形のbox-shadowではなく、不透明部の形に沿って光らせる。

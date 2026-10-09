@@ -50,6 +50,8 @@ export interface WorkImage {
   playOverlay?: boolean;
   /** クリックで再生する動画のURL。imageはそのポスターとして使われる */
   video?: string;
+  /** アニメーション画像(変換せずそのまま配信する) */
+  animated?: boolean;
   /** ポラロイド風の影なし素通し画像(キャラ画像など) */
   plain?: boolean;
   /** グロー強度の調整段階。soft/softer=plain時の弱め、strong=通常フレームの増量。省略時は標準 */
@@ -168,7 +170,7 @@ export const worksGroups: { affiliation: string; works: Work[] }[] = [
         ],
         images: [
           { image: amabieApp, alt: "Amabie Projectのアプリ画面", width: 136, plain: true, glow: "softer" },
-          { image: amabieChara, alt: "アマビエ様のキャラクター", width: 260, plain: true, glow: "softer" },
+          { image: amabieChara, alt: "アマビエ様のキャラクター", animated: true, width: 260, plain: true, glow: "softer" },
         ],
         links: [{ label: "Github", url: "https://github.com/FunLocks/team2003" }],
       },

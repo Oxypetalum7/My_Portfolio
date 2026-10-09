@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import { MOON_LANE_X, ROOTS_LAYERS, hash } from "../lib/roots";
 import photoSynth from "../assets/biography/photo-synth.jpg";
 import photoNature from "../assets/biography/photo-nature.jpg";
@@ -27,6 +27,10 @@ import grain from "../assets/biography/roots/grain.png";
 
 // ポラロイドの写真(元は1600px幅)。表示はデスクトップで最大 338px×1.25倍、モバイルで170px程度なので、
 // 画面に合う幅のWebPを配る
+// どちらも表示は元画像の半分ほど(2x画面でちょうど等倍)なので、サイズはそのままにPNGからWebPへ
+const agaveMask = await getImage({ src: agave, format: "webp" });
+const stampImage = await getImage({ src: lupetanStamp, format: "webp" });
+
 const POLAROID_WIDTHS = [400, 800, 1200];
 const POLAROID_SIZES = "(max-width: 700px) 170px, 423px";
 
@@ -320,7 +324,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
           <div class="agave-blur">
             <div
               class="agave"
-              style={`--agave: url(${agave.src}); --agave-ratio: ${agave.width} / ${agave.height}`}
+              style={`--agave: url(${agaveMask.src}); --agave-ratio: ${agave.width} / ${agave.height}`}
             />
           </div>
           {
@@ -445,7 +449,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       </div>
     </div>
     <!-- ノートの右下に、少し傾けてポンと押したスタンプ -->
-    <img class="now-stamp" data-stamp src={lupetanStamp.src} width="512" height="512" alt="" loading="lazy" decoding="async" />
+    <img class="now-stamp" data-stamp src={stampImage.src} width="512" height="512" alt="" loading="lazy" decoding="async" />
   </div>
 </section>
 
