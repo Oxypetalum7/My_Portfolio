@@ -5,7 +5,8 @@ import discordBot from "../assets/works/discord-processing-bot.jpg";
 import discordBotVideo from "../assets/works/discord-processing-bot.mp4";
 import repairIt from "../assets/works/repair-it.png";
 import amabieApp from "../assets/works/amabie-app.png";
-import amabieChara from "../assets/works/amabie-chara.gif";
+// 元はamabie-chara.gif。scripts/render-animated-webp.mjs で変換したもの
+import amabieChara from "../assets/works/amabie-chara.webp";
 import funOnline from "../assets/works/fun-online.png";
 import didIt from "../assets/works/did-it.png";
 import ralaf from "../assets/works/ralaf.png";
