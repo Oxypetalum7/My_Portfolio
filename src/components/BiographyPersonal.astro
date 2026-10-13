@@ -1487,6 +1487,23 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     }
   }
 
+  /* タッチ端末(ピンチで拡大できる端末)では、Rootsを動きを減らす設定と同じ静止状態にする。
+     動く要素は1枚ずつ別の層に切り出され、その上に重なる夜の層まで巻き込んで層が増えるため、
+     iPhoneで素早くピンチするとメモリの上限を超えてページが落ちる */
+  @media (hover: none) and (pointer: coarse) {
+    .forest-layer,
+    .mist,
+    .grass-sticky,
+    .moon {
+      animation: none !important;
+    }
+
+    .firefly {
+      opacity: 0.5;
+      animation: none;
+    }
+  }
+
   @media (max-width: 1250px) {
     .photo-collage {
       position: static;
