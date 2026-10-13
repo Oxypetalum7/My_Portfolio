@@ -710,18 +710,25 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     pointer-events: none;
   }
 
-  .sky-calm {
+  /* タッチ端末では .vignette にまとめて描くので、グラデーションは変数にしておく */
+  .sky-calm,
+  .vignette {
     --agave-h: min(32vh, 300px);
+    --sky-calm-shade: radial-gradient(
+        calc(var(--agave-h) * 2.1) calc(var(--agave-h) * 1.5) at 0 0,
+        rgb(12 14 54 / 0.75) 0,
+        rgb(12 14 54 / 0.55) 40%,
+        rgb(12 14 54 / 0.2) 72%,
+        transparent 100%
+      )
+      no-repeat;
+  }
+
+  .sky-calm {
     position: sticky;
     top: 0;
     height: 100vh;
-    background: radial-gradient(
-      calc(var(--agave-h) * 2.1) calc(var(--agave-h) * 1.5) at 0 0,
-      rgb(12 14 54 / 0.75) 0,
-      rgb(12 14 54 / 0.55) 40%,
-      rgb(12 14 54 / 0.2) 72%,
-      transparent 100%
-    ) no-repeat;
+    background: var(--sky-calm-shade);
   }
 
   /* 色の斑は光として足し、藍の上にほんのり滲ませる */
@@ -967,15 +974,16 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   }
 
   .vignette {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    background: radial-gradient(
+    --vignette-shade: radial-gradient(
       ellipse 75% 70% at 50% 45%,
       transparent 45%,
       rgb(3 4 20 / 0.24) 70%,
       rgb(3 4 20 / 0.52) 100%
     );
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: var(--vignette-shade);
   }
 
   /* 草の影。stickyで夜の間は画面下に留まり、夜に入る時は下からせり上がる。
@@ -1502,6 +1510,23 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       opacity: 0.5;
       animation: none;
     }
+
+    /* 画面に留める層(花影の周りの和らげ・月・周辺減光・草)は1枚ずつ別の層になり、その上に重なる
+       要素も巻き込まれて層になる。層を減らすため、ホタルは夜空の汚しのすぐ上(月・森・花影の
+       和らげより奥)へ下げ、花影の周りの和らげは周辺減光と同じ要素に描く */
+    .sky-wash,
+    .text-shade,
+    .fireflies {
+      z-index: -1;
+    }
+
+    .sky-calm-frame {
+      display: none;
+    }
+
+    .vignette {
+      background: var(--vignette-shade), var(--sky-calm-shade);
+    }
   }
 
   @media (max-width: 1250px) {
@@ -1626,7 +1651,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     }
 
     .agave,
-    .sky-calm {
+    .sky-calm,
+    .vignette {
       --agave-h: min(22vh, 180px);
     }
 
