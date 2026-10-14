@@ -24,6 +24,14 @@ import skyMottle from "../assets/biography/roots/sky-mottle.webp";
 import skyNebula from "../assets/biography/roots/sky-nebula.webp";
 // 夜景のざらつき。SVGのノイズフィルタだと描画のたびにCPUで計算されるため、同じノイズを焼き付けたタイルを敷く
 import grain from "../assets/biography/roots/grain.png";
+// タッチ端末用。夜空の汚し・森・靄を1つの要素の背景にまとめて描くため、CSSで掛けていた
+// 不透明度・明るさを透明度に焼き込んだ版(scripts/render-roots-touch.mjs)。森・靄は広い画面用と、
+// 本文の背後に薄く敷く狭い画面(≤1250px)用の2通り
+const touchArt = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<{ default: ImageMetadata }>("../assets/biography/roots/touch/*.webp", { eager: true }),
+  ).map(([path, mod]) => [path.replace(/^.*\/([^/]+)\.webp$/, "$1"), mod.default.src]),
+);
 
 // ポラロイドの写真(元は1600px幅)。表示はデスクトップで最大 338px×1.25倍、モバイルで170px程度なので、
 // 画面に合う幅のWebPを配る
@@ -220,7 +228,13 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   </div>
 
   <div class="section roots-night">
-    <div class="night-band" aria-hidden="true">
+    <div
+      class="night-band"
+      aria-hidden="true"
+      style={Object.entries(touchArt)
+        .map(([name, src]) => `--touch-${name}: url(${src})`)
+        .join("; ")}
+    >
       <!-- 夜空の汚し。水彩の色ムラの上に星雲のような色を重ねる -->
       <Image src={rootsArt["sky-mottle"]} class="sky-wash sky-mottle" widths={[800, 1600]} sizes="100vw" alt="" />
       <Image src={rootsArt["sky-nebula"]} class="sky-wash sky-nebula" widths={[800, 1600]} sizes="100vw" alt="" />
@@ -652,7 +666,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     z-index: -1;
     /* hiddenだとスクロールコンテナになり、森のview()タイムラインがページのスクロールを拾えなくなる */
     overflow: clip;
-    background: linear-gradient(
+    /* 夕闇から夜へのグラデーション。タッチ端末では背景の重ね描きの一番下にも使うので変数にしておく */
+    --dusk-sky: linear-gradient(
       to bottom,
       /* 夕闇: 白→藤→藍を滑らかな曲線で刻み、途中や終点で勾配が折れて線に見えないようにする */
       #ffffff 0,
@@ -672,6 +687,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       #201a50 70%,
       #2a1d52 100%
     );
+    background: var(--dusk-sky);
     /* 下端の破れ口は、Nowの紙の .tear-cover を上から重ねて作る。
        縦に長いこの層をマスクで切り抜くと、iPhoneで拡大した時に層全体ぶんのメモリを確保して落ちる */
   }
@@ -1527,6 +1543,107 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     .vignette {
       background: var(--vignette-shade), var(--sky-calm-shade);
     }
+
+    /* 夜空の汚し・本文側の沈め・森・靄・レトロな色褪せは、それぞれ別の要素で重ねると(ブレンドモードと、
+       画面に留める層との重なりで)1枚ずつ夜の縦全体の大きさの合成層になり、ピンチで拡大した時に
+       層ごとに「層全体×拡大率²」のメモリを確保して落ちる。タッチ端末ではどれも動かないので、
+       すべて .night-band の背景画像として重ね、background-blend-mode で同じ混ぜ方をして1枚に描く。
+       層ごとの opacity / filter は画像の透明度に焼き込んである(scripts/render-roots-touch.mjs) */
+    .sky-wash,
+    .text-shade,
+    .forest-band,
+    .mist,
+    .retro-fade {
+      display: none;
+    }
+
+    /* ざらつきだけは背景にまとめない。Safariは敷き詰めた(repeat)背景画像に background-blend-mode を
+       掛けると灰色に潰れて描くため、要素のまま残し、画面に留める層より奥(z-index: -1)で描いて
+       合成層にならないようにする。月とホタルの上には掛からなくなるが、ごく薄いので見分けはつかない */
+    .retro-grain {
+      z-index: -1;
+    }
+
+    .night-band {
+      /* 森の原画の表示幅(スクリプトが .forest を測って入れる)と、森の箱の幅・位置 */
+      --fw: var(--frame-w, 0px);
+      --forest-w: min(46%, 760px);
+      --touch-forest-far: var(--touch-forest-far-wide);
+      --touch-forest-mid: var(--touch-forest-mid-wide);
+      --touch-forest-near: var(--touch-forest-near-wide);
+      --touch-mist-far: var(--touch-mist-far-wide);
+      --touch-mist-mid: var(--touch-mist-mid-wide);
+      --touch-text-shade: linear-gradient(to right, rgb(4 5 22 / 0.34) 0, rgb(4 5 22 / 0.28) 40%, transparent 62%);
+      /* 上から順(= 元の要素の重なりの手前から順)。森の各帯の縦位置は、原画(600×1300)を縦の中央に
+         置いた時の帯の中心に合わせる(帯の中心 − 650)/600 × 表示幅 */
+      background-image:
+        linear-gradient(rgb(30 25 46 / 0.55), rgb(30 25 46 / 0.55)),
+        var(--touch-forest-near),
+        var(--touch-mist-mid),
+        var(--touch-forest-mid),
+        var(--touch-mist-far),
+        var(--touch-forest-far),
+        var(--touch-text-shade),
+        var(--touch-sky-nebula),
+        var(--touch-sky-mottle),
+        var(--dusk-sky);
+      background-size:
+        100% 100%,
+        var(--fw) auto,
+        var(--forest-w) 100%,
+        var(--fw) auto,
+        var(--forest-w) 100%,
+        var(--fw) auto,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%;
+      background-position:
+        0 0,
+        right 0 top calc(50% + var(--fw) * 0.705),
+        right 0 top 0,
+        right 0 top calc(50% + var(--fw) * 0.045),
+        right 0 top 0,
+        right 0 top calc(50% + var(--fw) * -0.634167),
+        0 0,
+        0 0,
+        0 0,
+        0 0;
+      background-repeat: no-repeat;
+      background-blend-mode: lighten, overlay, soft-light, overlay, soft-light, overlay, normal, screen, normal, normal;
+    }
+
+    /* 周辺減光・花影の周りの和らげは、元はレトロな色褪せ(.retro-fade)の下にあったが、背景にまとめた
+       質感より手前へ出るので、草と同じく色褪せを通した後の色で塗る */
+    .vignette {
+      --vignette-shade: radial-gradient(
+        ellipse 75% 70% at 50% 45%,
+        transparent 45%,
+        rgb(19 16 36 / 0.24) 70%,
+        rgb(19 16 36 / 0.52) 100%
+      );
+      --sky-calm-shade: radial-gradient(
+          calc(var(--agave-h) * 2.1) calc(var(--agave-h) * 1.5) at 0 0,
+          rgb(22 20 54 / 0.75) 0,
+          rgb(22 20 54 / 0.55) 40%,
+          rgb(22 20 54 / 0.2) 72%,
+          transparent 100%
+        )
+        no-repeat;
+    }
+  }
+
+  /* 狭い画面では森が本文の背後に回るので、全幅に薄く(0.35倍を焼き込んだ画像に)敷き、沈めも全幅に均す */
+  @media (hover: none) and (pointer: coarse) and (max-width: 1250px) {
+    .night-band {
+      --forest-w: 100%;
+      --touch-forest-far: var(--touch-forest-far-narrow);
+      --touch-forest-mid: var(--touch-forest-mid-narrow);
+      --touch-forest-near: var(--touch-forest-near-narrow);
+      --touch-mist-far: var(--touch-mist-far-narrow);
+      --touch-mist-mid: var(--touch-mist-mid-narrow);
+      --touch-text-shade: linear-gradient(rgb(4 5 22 / 0.22), rgb(4 5 22 / 0.22));
+    }
   }
 
   @media (max-width: 1250px) {
@@ -1746,6 +1863,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       const laneX = f.right - (600 - lane) * scale;
       sticky.style.setProperty("--moon-x", `${laneX - sticky.getBoundingClientRect().left}px`);
       forest.style.setProperty("--frame-w", `${600 * scale}px`);
+      // タッチ端末では森を .night-band の背景として描くので、そちらにも渡す
+      forest.parentElement?.style.setProperty("--frame-w", `${600 * scale}px`);
     });
     update();
     moonObserver = new ResizeObserver(update);
@@ -1761,7 +1880,18 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     if (document.querySelector<HTMLElement>(".biography")?.dataset.side !== "personal") return;
     const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 200));
     idle(() => {
-      for (const img of document.querySelectorAll<HTMLImageElement>(".night-band img")) {
+      const band = document.querySelector<HTMLElement>(".night-band");
+      if (!band) return;
+      if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
+        // タッチ端末では夜景は .night-band の背景画像なので、そのURLを先に読み込んでデコードしておく
+        for (const [, url] of getComputedStyle(band).backgroundImage.matchAll(/url\("?([^")]+)"?\)/g)) {
+          const img = new Image();
+          img.src = url;
+          img.decode().catch(() => {});
+        }
+        return;
+      }
+      for (const img of band.querySelectorAll<HTMLImageElement>("img")) {
         img.loading = "eager";
         img.decode().catch(() => {});
       }
