@@ -38,6 +38,8 @@ const touchArt = Object.fromEntries(
 // どちらも表示は元画像の半分ほど(2x画面でちょうど等倍)なので、サイズはそのままにPNGからWebPへ
 const agaveMask = await getImage({ src: agave, format: "webp" });
 const stampImage = await getImage({ src: lupetanStamp, format: "webp" });
+// NowのDate欄に書く、Nowの文章を最後に更新した日。Nowの文章を書き換えたらここも直す
+const nowUpdated = "2026-09-30";
 
 const POLAROID_WIDTHS = [400, 800, 1200];
 const POLAROID_SIZES = "(max-width: 700px) 170px, 423px";
@@ -445,6 +447,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       </svg>
     </svg>
     <h2 class="h-section">Now <span class="ruby">いま、はまっていること</span></h2>
+    <p class="now-date">
+      <span class="now-date-label">Date</span>
+      <time datetime={nowUpdated}>{nowUpdated.split("-").map((part, i) => <>{i > 0 && <i>.</i>}<span>{part}</span></>)}</time>
+    </p>
     <div class="indent">
       <h3 class="h-item">FINAL FANTASY XIV</h3>
       <div class="desc-block">
@@ -1151,7 +1157,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     margin-top: calc((var(--tear-h) + 32px) * -1);
     padding: calc(var(--tear-h) + 24px) 0 16px;
     color: #4a3b2e;
-    /* 紙が変わったら字も変わる: ノートに太いペンで書き込んだような鉄瓶ゴシックにする */
+    /* 紙が変わったら字も変わる: 見出しはノートに太いペンで書き込んだような鉄瓶ゴシックにする
+       (本文は .desc-block で細い書体に戻す) */
     font-family: "Tetsubin Gothic", var(--font-jp);
   }
 
@@ -1210,19 +1217,70 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     font-weight: normal;
   }
 
-  /* 本文は極太の書体をわずかに軽く見せる。紙の色の縁取りを文字の上に重ねて輪郭をごく薄く削り、
-     色も見出しより一段明るい茶色にする(縁取りは線の中心に掛かるので、太さの半分だけ細くなる) */
+  /* 本文は細く落ち着いた書体を、鉛筆に寄せた茶色で。太いペンの鉄瓶ゴシックは見出しだけに残し、
+     書く道具の違いで見出しと本文の強弱を付ける */
   .now-paper .desc-block {
-    color: #66513f;
-    -webkit-text-stroke: 0.2px #f8f1e4;
+    font-family: var(--font-jp);
+    font-weight: 300;
+    color: #5b4a3b;
+    letter-spacing: 0.03em;
+  }
+
+  /* 段落の間は空行を入れず、段落の頭を1字下げて区切る */
+  .now-paper .desc-block p {
+    text-indent: 1em;
+  }
+
+  /* Date欄: ノートに印刷された「Date . .」の欄に、日付を藍のインクで手書きした見た目 */
+  .now-date {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    align-self: flex-end;
+    margin: 0;
+    padding: 0 4px 2px;
+    font-family: var(--font-jp);
+    font-size: 12px;
+    color: rgb(160 118 80 / 0.75);
+    border-bottom: 1px solid rgb(160 118 80 / 0.45);
+  }
+
+  .now-date-label {
+    font-family: var(--font-alumni);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+
+  .now-date time {
+    display: flex;
+    align-items: baseline;
+  }
+
+  /* 数字は印刷のドットの間に、少し傾けて書き込む */
+  .now-date time span {
+    min-width: 2.6em;
+    font-family: "Tetsubin Gothic", var(--font-jp);
+    font-size: 18px;
+    text-align: center;
+    color: #34406a;
+    rotate: -3deg;
+  }
+
+  .now-date time span:first-child {
+    min-width: 3.4em;
+  }
+
+  .now-date i {
+    font-style: normal;
   }
 
   .now-paper .ruby {
     color: #a08568;
   }
 
-  /* ノートの罫線。本文の行の高さを罫の間隔(--rule)にそろえ、見出し・段落の間も罫の倍数で空けて、
-     どの行も罫線の上に乗るようにする。罫線は文字のベースラインの少し下に引く */
+  /* ノートの罫線。本文の行の高さを罫の間隔(--rule)にそろえ、見出しの間も罫の倍数で空けて、
+     どの行も罫線の上に乗るようにする。罫線は文字のベースラインのすぐ下に引く */
   .now-paper .indent {
     --rule: 28px;
     position: relative;
@@ -1230,24 +1288,35 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     padding-bottom: var(--rule);
   }
 
-  /* 罫線は画面の半分ほどまで(ただし一番長い行より短くはしない)。インクが滲んだ質感のフィルターを掛ける */
+  /* 罫線はノートの1ページとして紙の右端まで通す。インクが滲んだ質感のフィルターを掛ける */
   .now-paper .indent::before {
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
-    width: min(100%, max(calc(50vw - var(--paper-bleed)), 52em));
+    width: 100%;
     z-index: -1;
     pointer-events: none;
     background-image: linear-gradient(transparent calc(var(--rule) - 1.5px), rgb(160 118 80 / 0.2) 0);
     background-size: 100% var(--rule);
-    background-position: 0 -2px;
+    background-position: 0 -7px;
     filter: url(#ink-bleed);
   }
 
+  /* 見出しは藍のインクで書いて蛍光ペンを引く。字が大きいぶんベースラインが下がるので、持ち上げて罫線に乗せる */
   .now-paper .h-item {
     line-height: var(--rule);
+    color: #34406a;
+    translate: 0 -5px;
+    padding: 0 0.25em;
+    margin-left: -0.25em;
+    background: linear-gradient(
+      transparent 52%,
+      rgb(240 190 80 / 0.42) 52%,
+      rgb(240 190 80 / 0.34) 86%,
+      transparent 86%
+    );
   }
 
   .now-paper .h-item:not(:first-child) {
@@ -1255,8 +1324,31 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   }
 
   .now-paper .desc-block {
-    gap: var(--rule);
+    gap: 0;
     line-height: var(--rule);
+  }
+
+  /* 広い画面では左に余白線を引き、Date欄を「Now」の見出しと同じ高さの右上に置く */
+  @media (min-width: 1251px) {
+    .now-paper .indent::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 12px;
+      width: 5px;
+      z-index: -1;
+      pointer-events: none;
+      border-left: 1px solid rgb(206 110 104 / 0.38);
+      border-right: 1px solid rgb(206 110 104 / 0.38);
+      filter: url(#ink-bleed);
+    }
+
+    .now-date {
+      position: absolute;
+      top: calc(var(--tear-h) + 24px + 14px);
+      right: 0;
+    }
   }
 
   /* 左右と下はページの余白まで敷き詰め、上端は破れ口の裏(ギザギザの一番高い所より上)まで差し込む。
