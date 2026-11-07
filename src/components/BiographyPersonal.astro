@@ -403,8 +403,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   <div class="section now-paper">
     <!-- Rootsの夜の紙(上の紙)を下端で破り、下に重なっていた温かみのある紙にNowを書く。
          夜の紙は切り抜かず、下の紙の上端を破れ口の形に切って夜の紙の上へ重ねる(.tear-cover)。
-         破れ口の芯と影はその上に描く -->
-    <div class="under-paper" aria-hidden="true"></div>
+         破れ口の芯と影はその上に描く。Nowのノートは最初は破れ口の下に隠れていて、帯を押すと引き出される -->
     <div class="tear-cover" aria-hidden="true"></div>
     <svg class="paper-tear" aria-hidden="true">
       <defs>
@@ -446,7 +445,10 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
         </g>
       </svg>
     </svg>
-    <h2 class="h-section">Now <span class="ruby">いま、はまっていること</span></h2>
+    <div class="now-clip">
+      <div class="now-sheet">
+        <div class="now-content" id="now-content" hidden="until-found">
+    <h2 class="h-section" tabindex="-1">Now <span class="ruby">いま、はまっていること</span></h2>
     <p class="now-date">
       <span class="now-date-label">Date</span>
       <time datetime={nowUpdated}>{nowUpdated.split("-").map((part, i) => <>{i > 0 && <i>.</i>}<span>{part}</span></>)}</time>
@@ -476,6 +478,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     </div>
     <!-- ノートの右下に、少し傾けてポンと押したスタンプ -->
     <img class="now-stamp" data-stamp src={stampImage.src} width="512" height="512" alt="" loading="lazy" decoding="async" />
+        </div>
+      </div>
+    </div>
+    <button class="now-teaser" type="button" aria-expanded="false" aria-controls="now-content">
+      <span class="now-teaser-ask">少しだけ、僕の話をしてもいいですか?</span>
+      <span class="now-teaser-title">Now ― いま、はまっていること</span>
+      <span class="now-teaser-arrow" aria-hidden="true">↓</span>
+    </button>
   </div>
 </section>
 
@@ -1154,12 +1164,162 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='12' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.3 0 0 0 0 0.18 1.4 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.06' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.36 0 0 0 0 0.2 1.2 0 0 0 -0.5'/%3E%3C/filter%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='3' seed='31' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0 0.24 0.4 0 0 0 -0.17'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='0.1'/%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E");
     --paper-bleed: 64px;
     --paper-bleed-bottom: 64px;
+    /* 閉じている間、破れ口の下に見えている帯の高さ(ページ下の余白ぶんは別に足す) */
+    --now-strip: 96px;
+    /* ノートを切り出す高さ。破れ口のギザギザの一番低い所(y≒63)のすぐ下で切り、紙を破れ口の近くから出す */
+    --now-cut: 64px;
+    --now-gap: calc(var(--tear-h) - var(--now-cut));
     margin-top: calc((var(--tear-h) + 32px) * -1);
-    padding: calc(var(--tear-h) + 24px) 0 16px;
+    padding: var(--now-cut) 0 0;
     color: #4a3b2e;
     /* 紙が変わったら字も変わる: 見出しはノートに太いペンで書き込んだような鉄瓶ゴシックにする
        (本文は .desc-block で細い書体に戻す) */
     font-family: "Tetsubin Gothic", var(--font-jp);
+  }
+
+  /* 引き出す紙の窓。下端に揃えて置いた紙を窓の上端で切るので、窓を広げると紙が破れ口の下から
+     下へ出てくる。iPhoneでは縦に長い要素のマスクがメモリを食うので、切り抜きだけで隠す */
+  .now-clip {
+    position: relative;
+    z-index: -1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: calc(100% + var(--paper-bleed) * 2);
+    height: calc(var(--now-gap) + var(--now-strip) + var(--paper-bleed-bottom));
+    margin: 0 calc(var(--paper-bleed) * -1) calc(var(--paper-bleed-bottom) * -1);
+    overflow: clip;
+    transition: height 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) 0.14s;
+  }
+
+  .now-paper.now-settled .now-clip {
+    height: auto;
+    transition: none;
+  }
+
+  /* 紙の切り口を破れ口の陰に溶かす。動かない紙の地(.tear-cover と同じ位置)を上から重ねるので、
+     何も通っていない時は見えない。本文は --now-gap + 24px より下から始まるので、開いた後も字には掛からない */
+  .now-clip::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    height: var(--now-gap);
+    pointer-events: none;
+    background-color: #f8f1e4;
+    background-image: var(--paper-noise);
+    mask-image: linear-gradient(#000 15%, transparent);
+  }
+
+  /* 左右と下はページの余白まで敷き詰める。下の余白は、紙が出きるにつれて帯のぶんを詰める。
+     閉じた時も開いた時も紙の上端が窓の上端に揃うので、地のノイズは .tear-cover と継ぎ目なくつながる */
+  .now-sheet {
+    flex: none;
+    isolation: isolate;
+    padding: 0 var(--paper-bleed) calc(var(--now-gap) + var(--now-strip) + var(--paper-bleed-bottom));
+    background-color: #f8f1e4;
+    background-image: var(--paper-noise);
+    transition: padding-bottom 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) 0.14s;
+  }
+
+  .now-paper.now-open .now-sheet {
+    padding-bottom: var(--paper-bleed-bottom);
+  }
+
+  .now-content {
+    position: relative;
+    padding-bottom: 16px;
+  }
+
+  .now-content:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    padding-top: calc(var(--now-gap) + 24px);
+  }
+
+  /* 紙の周辺の陰り。高さが変わる .now-sheet に付けると動く間に形が変わるので、本文と一緒に運ぶ */
+  .now-content::before {
+    content: "";
+    position: absolute;
+    inset: 0 calc(var(--paper-bleed) * -1) calc(var(--paper-bleed-bottom) * -1);
+    z-index: -2;
+    pointer-events: none;
+    background-image: radial-gradient(ellipse 90% 70% at 50% 35%, transparent 60%, rgb(150 110 70 / 0.05) 100%);
+  }
+
+  /* 動いている間だけ、罫線のインク滲みを描き直さないよう1枚の層にして運ぶ */
+  .now-paper.now-open:not(.now-settled) .now-content {
+    will-change: transform;
+  }
+
+  /* 開いた後はここへフォーカスを移す(キーボード・読み上げ用)。見た目の枠は出さない */
+  .now-content .h-section:focus {
+    outline: none;
+  }
+
+  /* 帯全体がボタン。破れ口のすぐ下から、ページ下の余白の端まで */
+  .now-teaser {
+    position: absolute;
+    top: var(--tear-h);
+    left: calc(var(--paper-bleed) * -1);
+    right: calc(var(--paper-bleed) * -1);
+    height: calc(var(--now-strip) + var(--paper-bleed-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 24px 0;
+    border: none;
+    background: none;
+    color: #4a3b2e;
+    font-family: var(--font-jp);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+      opacity 0.2s ease,
+      translate 0.3s ease;
+  }
+
+  .now-teaser:focus-visible {
+    outline: 2px solid #34406a;
+    outline-offset: -8px;
+  }
+
+  .now-teaser-ask {
+    font-size: 18px;
+  }
+
+  .now-teaser-title {
+    font-size: 14px;
+    color: #a08568;
+  }
+
+  .now-teaser-arrow {
+    font-size: 14px;
+    color: #34406a;
+    transition: translate 0.3s ease;
+  }
+
+  /* 紙がちょっと持ち上がるような、控えめな反応 */
+  @media (hover: hover) {
+    .now-teaser:hover {
+      translate: 0 -2px;
+    }
+
+    .now-teaser:hover .now-teaser-arrow {
+      translate: 0 4px;
+    }
+  }
+
+  .now-paper.now-open .now-teaser {
+    opacity: 0;
+    pointer-events: none;
   }
 
   /* スタンプ。インクが紙に染みたように乗算で重ね、ノイズのマスクでインクのかすれ・ムラを出す */
@@ -1346,29 +1506,14 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
 
     .now-date {
       position: absolute;
-      top: calc(var(--tear-h) + 24px + 14px);
+      top: calc(var(--now-gap) + 24px + 14px);
       right: 0;
     }
   }
 
-  /* 左右と下はページの余白まで敷き詰め、上端は破れ口の裏(ギザギザの一番高い所より上)まで差し込む。
-     夜の紙(z-index: -1)より下に敷く */
-  .under-paper {
-    position: absolute;
-    top: 16px;
-    left: calc(var(--paper-bleed) * -1);
-    right: calc(var(--paper-bleed) * -1);
-    bottom: calc(var(--paper-bleed-bottom) * -1);
-    z-index: -2;
-    background-color: #f8f1e4;
-    background-image:
-      var(--paper-noise),
-      radial-gradient(ellipse 90% 70% at 50% 35%, transparent 60%, rgb(150 110 70 / 0.05) 100%);
-  }
-
   /* 下の紙の上端を、夜の紙の破れ口の形に切って夜の上へ重ねる(破れ口より下だけ紙が見える)。
-     下の紙の地と同じ色・ノイズを、下の紙(top: 16px)と継ぎ目が出ないよう同じ位置に合わせて敷く。
-     下の紙の周辺の陰り(radial-gradient)はこの高さでは透明なので省く */
+     下の紙の地と同じ色・ノイズを、ノートの紙(.now-sheet)と継ぎ目が出ないよう同じ位置に合わせて敷く。
+     紙の周辺の陰り(radial-gradient)はこの高さでは透明なので省く */
   .tear-cover {
     position: absolute;
     top: 0;
@@ -1379,7 +1524,7 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     pointer-events: none;
     background-color: #f8f1e4;
     background-image: var(--paper-noise);
-    background-position: 0 16px;
+    background-position: 0 var(--now-cut);
     mask:
       linear-gradient(#000 0 0),
       var(--tear-mask) bottom center / var(--tear-w) var(--tear-h) repeat-x;
@@ -1588,6 +1733,13 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     .now-stamp[data-stamp] {
       opacity: 0.88;
       animation: none !important;
+    }
+
+    .now-clip,
+    .now-sheet,
+    .now-teaser,
+    .now-teaser-arrow {
+      transition: none;
     }
 
     .forest-layer,
@@ -1850,6 +2002,9 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
       --paper-bleed: 24px;
       --paper-bleed-bottom: 32px;
       --stamp-size: 156px;
+    }
+
+    .now-content {
       padding-bottom: calc(var(--stamp-size) + 24px);
     }
 
@@ -2018,7 +2173,8 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     if (collage) arm(collage);
   });
 
-  // Nowのスタンプは、ほぼ全体が画面に入ったところで一度だけ押す
+  // Nowのスタンプは、ノートが出きってから一度だけ押す。その時に少しでも見えていればすぐに押し、
+  // 画面の外なら、後でほぼ全体が画面に入った所で押す
   let stampObserver: IntersectionObserver | null = null;
 
   function armStamp() {
@@ -2026,14 +2182,18 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
     const stamp = document.querySelector(".now-stamp");
     if (!stamp) return;
     stamp.classList.remove("stamped");
+    if (!document.querySelector(".now-paper")?.classList.contains("now-settled")) return;
+    let firstCheck = true;
     stampObserver = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
+        const needed = firstCheck ? 0.2 : 0.8;
+        firstCheck = false;
+        if (entries.some((entry) => entry.intersectionRatio >= needed)) {
           stamp.classList.add("stamped");
           stampObserver?.disconnect();
         }
       },
-      { threshold: 0.8 },
+      { threshold: [0.2, 0.8] },
     );
     stampObserver.observe(stamp);
   }
@@ -2042,6 +2202,87 @@ const fireflies = Array.from({ length: 28 }, (_, i) => {
   document.addEventListener("biography:sidechange", (event) => {
     if ((event as CustomEvent).detail?.side !== "personal") armStamp();
   });
+
+  // Nowのノートを破れ口の下から引き出す。開いたら閉じない(読み進めた位置で閉じると画面が大きく飛ぶため)
+  function armNowTeaser() {
+    const paper = document.querySelector<HTMLElement>(".now-paper");
+    const clip = paper?.querySelector<HTMLElement>(".now-clip");
+    const content = paper?.querySelector<HTMLElement>(".now-content");
+    const teaser = paper?.querySelector<HTMLButtonElement>(".now-teaser");
+    if (!paper || !clip || !content || !teaser) return;
+
+    const settle = () => {
+      clip.style.height = "";
+      paper.classList.add("now-settled");
+      teaser.hidden = true;
+      armStamp();
+    };
+
+    const reveal = () => {
+      teaser.setAttribute("aria-expanded", "true");
+      content.hidden = false;
+      // 紙が出きった瞬間に押せるよう、スタンプの画像を先に読み込んでおく
+      content.querySelector<HTMLImageElement>(".now-stamp")?.setAttribute("loading", "eager");
+      paper.classList.add("now-open");
+    };
+
+    teaser.addEventListener("click", () => {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        reveal();
+        settle();
+      } else {
+        const onEnd = (event: Event) => {
+          if (event.target !== clip) return;
+          clip.removeEventListener("transitionend", onEnd);
+          clip.removeEventListener("transitioncancel", onEnd);
+          settle();
+        };
+        clip.addEventListener("transitionend", onEnd);
+        clip.addEventListener("transitioncancel", onEnd);
+        reveal();
+        const bleed = parseFloat(getComputedStyle(paper).getPropertyValue("--paper-bleed-bottom"));
+        clip.style.height = `${content.offsetHeight + bleed}px`;
+        followNowSheet(clip);
+      }
+      content.querySelector<HTMLElement>(".h-section")?.focus({ preventScroll: true });
+    });
+
+    // ページ内検索でNowの文章に当たった時は、動かさずにそのまま開く
+    content.addEventListener("beforematch", () => {
+      reveal();
+      settle();
+    });
+  }
+
+  // 帯が画面の下端にあると、開いても紙が画面の外へ伸びるだけになる。紙の出に合わせて、
+  // 破れ口が画面の上から2割の所へ来るまで一緒に送る。読み手がスクロールしたらすぐ手を離す
+  function followNowSheet(clip: HTMLElement) {
+    const start = window.scrollY;
+    const goal = clip.getBoundingClientRect().top + start - window.innerHeight * 0.2;
+    if (goal <= start) return;
+    const duration = 1100;
+    const began = performance.now();
+    let stopped = false;
+    const stop = () => {
+      stopped = true;
+    };
+    window.addEventListener("wheel", stop, { once: true, passive: true });
+    window.addEventListener("touchstart", stop, { once: true, passive: true });
+    const step = (now: number) => {
+      if (stopped) return;
+      const t = Math.min((now - began) / duration, 1);
+      window.scrollTo({ top: start + (goal - start) * (1 - (1 - t) ** 3), behavior: "instant" });
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        window.removeEventListener("wheel", stop);
+        window.removeEventListener("touchstart", stop);
+      }
+    };
+    requestAnimationFrame(step);
+  }
+
+  document.addEventListener("astro:page-load", armNowTeaser);
 
   // Professional側へ切り替わったらリセットし、次にPersonalへ戻った時も
   // スクロール位置に応じて再発火させる
