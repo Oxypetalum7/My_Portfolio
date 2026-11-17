@@ -56,7 +56,7 @@ try {
       `--window-size=${width},${height}`,
       "--virtual-time-budget=10000",
       `--screenshot=${png}`,
-      `${BASE}/dev/roots-artwork/${layer}`,
+      `${BASE}/dev/roots-artwork/${layer}/`,
     ], { stdio: "ignore" });
     const out = join(OUT_DIR, `${layer}.webp`);
     // 森は木のある帯だけを切り出す(帯の外は透明)
